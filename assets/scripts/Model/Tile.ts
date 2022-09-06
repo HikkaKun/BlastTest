@@ -1,13 +1,14 @@
+import { randomEnumKey } from '../Utilities';
 import Color from './Color'
 
 export interface TileConfig {
-	color: Color;
+	color?: Color;
 }
 
 export default class Tile {
 	public color: Color;
 
-	constructor(config: TileConfig) {
-		this.color = config.color;
+	constructor(config?: TileConfig) {
+		this.color = config?.color || randomEnumKey(Color);
 	}
 }
