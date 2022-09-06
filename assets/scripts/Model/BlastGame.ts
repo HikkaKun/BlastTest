@@ -1,3 +1,4 @@
+import Color from './Color';
 import Tile from './Tile';
 
 export interface BlastGameConfig {
@@ -13,6 +14,24 @@ export interface BlastGameConfig {
 	minSuperTileGroupSize?: number;
 }
 
+class Node {
+	public readonly x: number;
+	public readonly y: number;
+
+	private readonly _toStringResult: string;
+
+	constructor(x: number, y: number) {
+		this.x = x;
+		this.y = y;
+
+		this._toStringResult = `${this.x}.${this.y}`
+	}
+
+	toString(): string {
+		return this._toStringResult;
+	}
+}
+
 export default class BlastGame {
 
 	public get width() {
@@ -21,6 +40,10 @@ export default class BlastGame {
 
 	public get height() {
 		return this._height;
+	}
+
+	public get field() {
+		return this._field.slice();
 	}
 
 	private _width;
@@ -32,8 +55,6 @@ export default class BlastGame {
 		this._field.length = config.width * config.height;
 		this._width = config.width;
 		this._height = config.height;
-
-		this.initField();
 	}
 
 	public initField(): void {
@@ -51,6 +72,65 @@ export default class BlastGame {
 	}
 
 	public checkBounds(x: number, y: number): Boolean {
-		return x > 0 && x < this.width && y > 0 && y < this.height;
+		return x >= 0 && x < this.width && y >= 0 && y < this.height;
+	}
+
+	public tapAt(x: number, y: number): void {
+		if (!this.checkBounds(x, y)) return;
+
+		const tiles = this.findGroup(x, y);
+
+		if (tiles.length < 2) return;
+
+		//TODO: подумать как отправить информацию об удаленных тайлах
+	}
+
+	public findGroup(x: number, y: number): Array<{ x: number, y: number }> {
+		if (!this.checkBounds(x, y)) return [];
+
+		const tiles = new Array<{ x: number, y: number }>;
+
+		const pickedColor = this.tileAt(x, y)?.color as Color;
+		const start = new Node(x, y);
+
+		const frontier = new Array<Node>;
+		frontier.push(start)
+		const visited = new Set<string>;
+		visited.add(start.toString());
+		tiles.push(start);
+
+		while (frontier.length) {
+			const current = frontier.shift() as Node;
+			const neighbors = this._getNeighbors(current.x, current.y)
+			for (const next of neighbors) {
+				if (this.tileAt(next.x, next.y)?.color != pickedColor) continue;
+				if (visited.has(next.toString())) continue;
+
+				frontier.push(next);
+				visited.add(next.toString());
+				tiles.push(next);
+			}
+		}
+
+		return tiles;
+	}
+
+	private _getNeighbors(x: number, y: number): Array<Node> {
+		const neighbors = new Array<Node>;
+
+		const indexX = [0, 1, 0, -1];
+		const indexY = [-1, 0, 1, 0];
+
+		for (let i = 0; i < 4; i++) {
+			const neighborX = x + indexX[i];
+			const neighborY = y + indexY[i];
+
+			if (!this.tileAt(neighborX, neighborY)) continue;
+
+			const node = new Node(neighborX, neighborY);
+			neighbors.push(node);
+		}
+
+		return neighbors;
 	}
 }
