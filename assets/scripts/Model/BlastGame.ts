@@ -1,3 +1,4 @@
+import { randomEnumKey } from '../Utilities';
 import Color from './Color';
 import Tile from './Tile';
 
@@ -49,19 +50,23 @@ export default class BlastGame {
 	private _width;
 	private _height;
 	private _field: Tile[];
+	private _minTileGroupSize: number;
+	private _colors: number;
 
 	constructor(config: BlastGameConfig) {
 		this._field = new Array<Tile>();
 		this._field.length = config.width * config.height;
 		this._width = config.width;
 		this._height = config.height;
+		this._minTileGroupSize = config.minTilesGroupSize || 2;
+		this._colors = config.colors || 5;
 	}
 
 	public initField(): void {
 		const field = this._field;
 
 		for (let i = 0; i < field.length; i++) {
-			field[i] = new Tile();
+			field[i] = new Tile({ color: randomEnumKey(Color, this._colors) });
 		}
 	}
 
@@ -80,7 +85,7 @@ export default class BlastGame {
 
 		const tiles = this.findGroup(x, y);
 
-		if (tiles.length < 2) return;
+		if (tiles.length < this._minTileGroupSize) return;
 
 		//TODO: подумать как отправить информацию об удаленных тайлах
 	}
