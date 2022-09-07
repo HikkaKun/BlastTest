@@ -15,7 +15,13 @@ export interface BlastGameConfig {
 	minSuperTileGroupSize?: number;
 }
 
-class Node {
+export interface BlastGameCallbacks {
+	OnDestroyTile: (position: Node) => void;
+	OnMoveTile: (oldPosition: Node, newPosition: Node) => void;
+	OnGenerateTile: (forPosition: Node, fromOutside: boolean) => void;
+}
+
+export class Node {
 	public readonly x: number;
 	public readonly y: number;
 
@@ -44,7 +50,7 @@ export default class BlastGame {
 	}
 
 	public get field() {
-		return this._field.slice();
+		return this._field.map(tile => tile == null ? null : Object.assign({}, tile));
 	}
 
 	private _width;
@@ -53,13 +59,21 @@ export default class BlastGame {
 	private _minTileGroupSize: number;
 	private _colors: number;
 
-	constructor(config: BlastGameConfig) {
+	private OnDestroyTile: (position: Node) => void;
+	private OnMoveTile: (oldPosition: Node, newPosition: Node) => void;
+	private OnGenerateTile: (forPosition: Node, fromOutside: boolean) => void;
+
+	constructor(config: BlastGameConfig, callbacks: BlastGameCallbacks) {
 		this._field = new Array<Tile>();
 		this._field.length = config.width * config.height;
 		this._width = config.width;
 		this._height = config.height;
 		this._minTileGroupSize = config.minTilesGroupSize || 2;
 		this._colors = config.colors || 5;
+
+		this.OnDestroyTile = callbacks.OnDestroyTile;
+		this.OnMoveTile = callbacks.OnMoveTile;
+		this.OnGenerateTile = callbacks.OnGenerateTile;
 	}
 
 	public fieldIndex(x: number, y: number): number | null {
