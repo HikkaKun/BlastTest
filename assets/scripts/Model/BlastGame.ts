@@ -171,34 +171,32 @@ export default class BlastGame {
 	private _updateColumn(x: number): void {
 		let bottomEmptyY = this.height - 1;
 
-		while (bottomEmptyY != -1) {
-			while (this.tileAt(x, bottomEmptyY) != null) {
-				bottomEmptyY--;
-			}
+		while (this.tileAt(x, bottomEmptyY) != null) {
+			bottomEmptyY--;
+		}
 
-			if (bottomEmptyY == -1) return;
+		if (bottomEmptyY == -1) return;
 
-			let nearestTileY = bottomEmptyY - 1;
+		const tiles = new Array<Tile>;
 
-			while (this.tileAt(x, nearestTileY) == null || nearestTileY == 0) {
-				nearestTileY--;
-			}
+		let y: number;
 
-			if (nearestTileY < 0) {
-				break;
-			}
-
-			const emptyTiles = bottomEmptyY - nearestTileY;
-
-			for (let y = nearestTileY; y >= 0; y--) {
-				this._swap(x, y, x, y + emptyTiles);
+		for (y = bottomEmptyY - 1; y >= 0; y--) {
+			const tile = this.tileAt(x, y)
+			if (tile != null) {
+				tiles.push(tile);
+				const index = this.fieldIndex(x, y) as number;
+				this._field[index] = null;
 			}
 		}
 
-		for (let y = 0; y <= bottomEmptyY; y++) {
-			const index = this.fieldIndex(x, y) as number;
+		y = bottomEmptyY;
 
-			this._field[index] = this._generateTile();
+		while (y >= 0) {
+			const index = this.fieldIndex(x, y) as number;
+			this._field[index] = tiles.shift() ?? this._generateTile();
+
+			y--;
 		}
 	}
 
