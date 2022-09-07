@@ -93,6 +93,8 @@ export default class BlastGame {
 		if (tiles.length < this._minTileGroupSize) return;
 
 		//TODO: подумать как отправить информацию об удаленных тайлах
+
+		this._destroyTiles(tiles);
 	}
 
 	public findGroup(x: number, y: number): Array<Node> {
@@ -146,5 +148,66 @@ export default class BlastGame {
 
 	private _generateTile(): Tile {
 		return new Tile({ color: randomEnumKey(Color, this._colors) });
+	}
+
+	private _destroyTiles(tiles: Array<Node>): void {
+		const columnsToUpdate = new Set<number>;
+
+		for (let i = 0; i < tiles.length; i++) {
+			const tile = tiles[i];
+			const { x, y } = tile;
+			const index = this.fieldIndex(x, y) as number;
+
+			this._field[index] = null;
+
+			columnsToUpdate.add(x);
+		}
+
+		columnsToUpdate.forEach((x) => {
+			this._updateColumn(x);
+		})
+	}
+
+	private _updateColumn(x: number): void {
+		let bottomEmptyY = this.height - 1;
+
+		while (bottomEmptyY != -1) {
+			while (this.tileAt(x, bottomEmptyY) != null) {
+				bottomEmptyY--;
+			}
+
+			if (bottomEmptyY == -1) return;
+
+			let nearestTileY = bottomEmptyY - 1;
+
+			while (this.tileAt(x, nearestTileY) == null || nearestTileY == 0) {
+				nearestTileY--;
+			}
+
+			if (nearestTileY < 0) {
+				break;
+			}
+
+			const emptyTiles = bottomEmptyY - nearestTileY;
+
+			for (let y = nearestTileY; y >= 0; y--) {
+				this._swap(x, y, x, y + emptyTiles);
+			}
+		}
+
+		for (let y = 0; y <= bottomEmptyY; y++) {
+			const index = this.fieldIndex(x, y) as number;
+
+			this._field[index] = this._generateTile();
+		}
+	}
+
+	private _swap(x1: number, y1: number, x2: number, y2: number): void {
+		const index1 = this.fieldIndex(x1, y1);
+		const index2 = this.fieldIndex(x2, y2);
+
+		if (index1 == null || index2 == null) return;
+
+		[this._field[index1], this._field[index2]] = [this._field[index2], this._field[index1]];
 	}
 }
