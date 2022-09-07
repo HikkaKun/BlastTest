@@ -49,7 +49,7 @@ export default class BlastGame {
 
 	private _width;
 	private _height;
-	private _field: Tile[];
+	private _field: Array<Tile | null>;
 	private _minTileGroupSize: number;
 	private _colors: number;
 
@@ -62,18 +62,23 @@ export default class BlastGame {
 		this._colors = config.colors || 5;
 	}
 
+	public fieldIndex(x: number, y: number): number | null {
+		if (!this.checkBounds(x, y)) return null;
+
+		return x % this._width + y * this._height;
+	}
+
 	public initField(): void {
 		const field = this._field;
 
 		for (let i = 0; i < field.length; i++) {
-			field[i] = new Tile({ color: randomEnumKey(Color, this._colors) });
+			field[i] = this._generateTile();
 		}
 	}
 
 	public tileAt(x: number, y: number): Tile | null {
-		if (!this.checkBounds(x, y)) return null;
-
-		return this._field[x % this._width + y * this._height];
+		const index = this.fieldIndex(x, y);
+		return index == null ? null : this._field[index];
 	}
 
 	public checkBounds(x: number, y: number): Boolean {
@@ -90,10 +95,10 @@ export default class BlastGame {
 		//TODO: подумать как отправить информацию об удаленных тайлах
 	}
 
-	public findGroup(x: number, y: number): Array<{ x: number, y: number }> {
+	public findGroup(x: number, y: number): Array<Node> {
 		if (!this.checkBounds(x, y)) return [];
 
-		const tiles = new Array<{ x: number, y: number }>;
+		const tiles = new Array<Node>;
 
 		const pickedColor = this.tileAt(x, y)?.color as Color;
 		const start = new Node(x, y);
@@ -137,5 +142,9 @@ export default class BlastGame {
 		}
 
 		return neighbors;
+	}
+
+	private _generateTile(): Tile {
+		return new Tile({ color: randomEnumKey(Color, this._colors) });
 	}
 }
