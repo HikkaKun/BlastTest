@@ -76,10 +76,19 @@ export default class BlastGame {
 		this.OnGenerateTile = callbacks.OnGenerateTile;
 	}
 
-	public fieldIndex(x: number, y: number): number | null {
+	public indexFromPosition(x: number, y: number): number | null {
 		if (!this.checkBounds(x, y)) return null;
 
 		return x % this._width + y * this._height;
+	}
+
+	public positionFromIndex(index: number): Node | null {
+		const x = index % this.width;
+		const y = Math.floor(index / this.height);
+
+		if (!this.checkBounds(x, y)) return null;
+
+		return new Node(x, y);
 	}
 
 	public initField(): void {
@@ -87,11 +96,12 @@ export default class BlastGame {
 
 		for (let i = 0; i < field.length; i++) {
 			field[i] = this._generateTile();
+			this.OnGenerateTile(this.positionFromIndex(i) as Node, true);
 		}
 	}
 
 	public tileAt(x: number, y: number): Tile | null {
-		const index = this.fieldIndex(x, y);
+		const index = this.indexFromPosition(x, y);
 		return index == null ? null : this._field[index];
 	}
 
@@ -170,7 +180,7 @@ export default class BlastGame {
 		for (let i = 0; i < tiles.length; i++) {
 			const tile = tiles[i];
 			const { x, y } = tile;
-			const index = this.fieldIndex(x, y) as number;
+			const index = this.indexFromPosition(x, y) as number;
 
 			this._field[index] = null;
 
@@ -199,7 +209,7 @@ export default class BlastGame {
 			const tile = this.tileAt(x, y)
 			if (tile != null) {
 				tiles.push(tile);
-				const index = this.fieldIndex(x, y) as number;
+				const index = this.indexFromPosition(x, y) as number;
 				this._field[index] = null;
 			}
 		}
@@ -207,16 +217,21 @@ export default class BlastGame {
 		y = bottomEmptyY;
 
 		while (y >= 0) {
-			const index = this.fieldIndex(x, y) as number;
-			this._field[index] = tiles.shift() ?? this._generateTile();
+			const index = this.indexFromPosition(x, y) as number;
+			if (tiles.length > 0) {
+				this._field[index] = tiles.shift() as Tile;
+			} else {
+				this._field[index] = this._generateTile();
+				this.OnGenerateTile(this.positionFromIndex(index) as Node, true);
+			}
 
 			y--;
 		}
 	}
 
 	private _swap(x1: number, y1: number, x2: number, y2: number): void {
-		const index1 = this.fieldIndex(x1, y1);
-		const index2 = this.fieldIndex(x2, y2);
+		const index1 = this.indexFromPosition(x1, y1);
+		const index2 = this.indexFromPosition(x2, y2);
 
 		if (index1 == null || index2 == null) return;
 
