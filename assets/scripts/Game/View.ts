@@ -56,11 +56,16 @@ export default class View extends cc.Component {
 	}
 
 	private OnTileTap(tile: TileView): void {
-		cc.log(tile.id);
+		this.game.tapAt(tile.x, tile.y);
 	}
 
 	private OnDestroyTile(position: Position) {
-
+		const tile = this.tiles.get(position.toString()) as TileView;
+		const tween = cc.tween(tile.node)
+			.to(0.25, { scale: 0 })
+			.call(() => { tile.node.active = false; })
+			.start();
+		this.tiles.delete(position.toString());
 	}
 
 	private OnGenerateTile(forPosition: Position, fromOutside: boolean) {
@@ -76,13 +81,32 @@ export default class View extends cc.Component {
 		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
 		node.x = forPosition.x * 40;
-		node.y = forPosition.y * -40;
+		node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -40;
 
 		node.width = 40;
 		node.height = 40;
+
+		node.scale = 0;
+		cc.tween(node)
+			.to(0.25, { scale: 1, y: view.y * -40 })
+			.start();
+
+		this.tiles.set(view.id, view);
 	}
 
 	private OnMoveTile(oldPosition: Position, newPosition: Position) {
+		const tile = this.tiles.get(oldPosition.toString()) as TileView;
+
+		tile.id = newPosition.toString();
+		tile.x = newPosition.x;
+		tile.y = newPosition.y;
+
+		this.tiles.delete(oldPosition.toString());
+		this.tiles.set(newPosition.toString(), tile);
+		const node = tile.node;
+		cc.tween(node)
+			.to(0.25, { x: tile.x * 40, y: tile.y * -40 })
+			.start();
 
 	}
 }
