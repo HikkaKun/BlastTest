@@ -116,8 +116,6 @@ export default class BlastGame {
 
 		if (tiles.length < this._minTileGroupSize) return;
 
-		//TODO: подумать как отправить информацию об удаленных тайлах
-
 		this._destroyTiles(tiles);
 	}
 
@@ -184,6 +182,8 @@ export default class BlastGame {
 
 			this._field[index] = null;
 
+			this.OnDestroyTile(tile);
+
 			columnsToUpdate.add(x);
 		}
 
@@ -201,14 +201,14 @@ export default class BlastGame {
 
 		if (bottomEmptyY == -1) return;
 
-		const tiles = new Array<Tile>;
+		const tiles = new Array<{ oldPosition: Position, tile: Tile }>;
 
 		let y: number;
 
 		for (y = bottomEmptyY - 1; y >= 0; y--) {
 			const tile = this.tileAt(x, y)
 			if (tile != null) {
-				tiles.push(tile);
+				tiles.push({ oldPosition: new Position(x, y), tile });
 				const index = this.indexFromPosition(x, y) as number;
 				this._field[index] = null;
 			}
@@ -219,7 +219,9 @@ export default class BlastGame {
 		while (y >= 0) {
 			const index = this.indexFromPosition(x, y) as number;
 			if (tiles.length > 0) {
-				this._field[index] = tiles.shift() as Tile;
+				const oldTile = tiles.shift() as { oldPosition: Position, tile: Tile };
+				this._field[index] = oldTile.tile;
+				this.OnMoveTile(oldTile.oldPosition, new Position(x, y));
 			} else {
 				this._field[index] = this._generateTile();
 				this.OnGenerateTile(this.positionFromIndex(index) as Position, true);
