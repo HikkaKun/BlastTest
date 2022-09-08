@@ -2,6 +2,7 @@ import BlockConfig from './BlockConfig';
 import BlastGame, { BlastGameConfig, BlastGameCallbacks, Position } from '../Model/BlastGame';
 import Color from '../Model/Color';
 import TileView from './TileView';
+import GameEvent from './GameEvent';
 
 const { ccclass, property } = cc._decorator;
 
@@ -19,7 +20,7 @@ export default class View extends cc.Component {
 
 	public tiles = new Map<string, TileView>;
 
-	public onLoad() {
+	protected onLoad() {
 		for (const blockConfig of this.blockConfigs) {
 			this.blocks.set(blockConfig.color as Color, blockConfig.spriteFrame);
 		}
@@ -40,6 +41,24 @@ export default class View extends cc.Component {
 		this.game.initField();
 	}
 
+	protected onEnable(): void {
+		this._handleEvents(true);
+	}
+
+	protected onDisable(): void {
+		this._handleEvents(false);
+	}
+
+	private _handleEvents(isOn: boolean) {
+		const func = isOn ? 'on' : 'off';
+
+		cc.systemEvent[func](GameEvent.TileTap, this.OnTileTap, this);
+	}
+
+	private OnTileTap(tile: TileView): void {
+		cc.log(tile.id);
+	}
+
 	private OnDestroyTile(position: Position) {
 
 	}
@@ -50,12 +69,14 @@ export default class View extends cc.Component {
 
 		const view = node.getComponent(TileView);
 		view.id = forPosition.toString();
+		view.x = forPosition.x;
+		view.y = forPosition.y;
 
 		const sprite = node.getComponent(cc.Sprite);
 		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
 		node.x = forPosition.x * 40;
-		node.y = forPosition.y * 40;
+		node.y = forPosition.y * -40;
 
 		node.width = 40;
 		node.height = 40;
