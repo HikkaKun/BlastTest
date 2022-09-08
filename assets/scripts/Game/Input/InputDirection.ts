@@ -1,6 +1,8 @@
+import { EnumType } from '../../Utilities';
+
 export const InputDirection = cc.Enum({
 	None: 0,
 	Tile: 1
 });
 
-export type InputDirectionEnum = typeof InputDirection[keyof typeof InputDirection];
+export type InputDirectionEnum = EnumType<typeof InputDirection>;
