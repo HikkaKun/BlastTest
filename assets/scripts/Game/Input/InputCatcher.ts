@@ -1,7 +1,14 @@
+import GameEvent from '../GameEvent';
+import InputDirection from './InputDirection';
+import InputType from './InputType';
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class InputCatcher extends cc.Component {
+	@property({ type: InputDirection })
+	public direction = InputDirection.None;
+
 	protected onEnable(): void {
 		this.handleInput(true);
 	}
@@ -19,7 +26,15 @@ export default class InputCatcher extends cc.Component {
 		this.node[func](cc.Node.EventType.TOUCH_CANCEL, this.onUp, this);
 	}
 
-	protected onDown(event: cc.Event.EventTouch) { }
-	protected onMove(event: cc.Event.EventTouch) { }
-	protected onUp(event: cc.Event.EventTouch) { }
+	protected onDown(event: cc.Event.EventTouch) {
+		cc.systemEvent.emit(GameEvent.Input, InputType.Down, event.touch, this.direction, this);
+	}
+
+	protected onMove(event: cc.Event.EventTouch) {
+		cc.systemEvent.emit(GameEvent.Input, InputType.Move, event.touch, this.direction, this);
+	}
+
+	protected onUp(event: cc.Event.EventTouch) {
+		cc.systemEvent.emit(GameEvent.Input, InputType.Up, event.touch, this.direction, this);
+	}
 }
