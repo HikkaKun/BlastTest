@@ -6,6 +6,3 @@ export function randomEnumKey<T extends object>(anEnum: T, limitTo?: number): T[
 
 	return values[index];
 }
-
-export type EnumType<T> = T[keyof T];
-

@@ -1,5 +1,4 @@
 import Color from '../Model/Color'
-import { EnumType } from '../Utilities';
 
 export const ViewColor = cc.Enum({
 	Blue: Color.Blue,
@@ -9,4 +8,4 @@ export const ViewColor = cc.Enum({
 	Yellow: Color.Yellow
 });
 
-export type ViewColorEnum = EnumType<typeof ViewColor>;
+export type ViewColorEnum = typeof ViewColor[keyof typeof ViewColor];
