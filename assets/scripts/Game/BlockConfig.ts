@@ -1,4 +1,4 @@
-import ViewColor from './ViewColor';
+import { ViewColor, ViewColorEnum } from './ViewColor';
 
 const { ccclass, property } = cc._decorator;
 
@@ -8,5 +8,5 @@ export default class BlockConfig {
 	public spriteFrame: cc.SpriteFrame = null;
 
 	@property({ type: ViewColor, })
-	public color = ViewColor.Blue;
+	public color: ViewColorEnum = ViewColor.Blue;
 }

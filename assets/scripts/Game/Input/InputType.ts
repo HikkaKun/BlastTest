@@ -1,7 +1,7 @@
-const InputType = cc.Enum({
+export const InputType = cc.Enum({
 	Down: 0,
 	Move: 1,
 	Up: 2
 });
 
-export default InputType;
+export type InputTypeEnum = typeof InputType[keyof typeof InputType]; 
