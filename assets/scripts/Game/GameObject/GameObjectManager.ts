@@ -1,28 +1,33 @@
 import GameEvent from '../GameEvent';
 import GameObject from './GameObject';
-import { GameOjbectType, GameOjbectTypeEnum } from './GameObjectType';
+import { GameObjectType, GameOjbectTypeEnum } from './GameObjectType';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class GameObjectManager extends cc.Component {
-	@property({ type: GameOjbectType, serializable: false })
-	protected _type: GameOjbectTypeEnum = GameOjbectType.None;
+	@property({ type: GameObjectType, serializable: false })
+	protected _type: GameOjbectTypeEnum = GameObjectType.None;
 
-	@property({ type: GameOjbectType })
+	@property({ type: GameObjectType })
 	protected get type() {
 		return this._type;
 	}
 
 	protected set type(value) {
 		this._type = value;
-		this.prefab = this._prefabs.get(value) ?? null;
+		const index = this._convertedGameOjbectTypes.indexOf(value);
+		if (index == -1) {
+			this._convertedGameOjbectTypes.push(value);
+			this._prefabs.push(null);
+		}
+		this.prefab = this._prefabs[this._convertedGameOjbectTypes.indexOf(value)];
 	}
 
 	@property({ type: cc.Prefab, serializable: false })
 	protected _prefab: cc.Prefab | null = null;
 
-	@property({ type: cc.Prefab, visible: function (this: GameObjectManager) { return this.type != GameOjbectType.None } })
+	@property({ type: cc.Prefab, visible: function (this: GameObjectManager) { return this.type != GameObjectType.None } })
 	protected get prefab() {
 		return this._prefab;
 	}
@@ -30,12 +35,20 @@ export default class GameObjectManager extends cc.Component {
 	protected set prefab(value: cc.Prefab | null) {
 		this._prefab = value;
 
-		this._prefabs.set(this.type, value);
+		if (this.type != GameObjectType.None) {
+			this._prefabs[this._convertedGameOjbectTypes.indexOf(this.type)] = value;
+		}
 	}
 
-	protected _prefabs = new Map<GameOjbectTypeEnum, cc.Prefab | null>;
+	@property({ type: [cc.Prefab], visible: false })
+	protected _prefabs = new Array<cc.Prefab | null>;
+
+	@property([GameObjectType])
+	protected _convertedGameOjbectTypes = new Array<GameOjbectTypeEnum>;
+
 
 	protected onLoad(): void {
+		cc.log(this._prefabs);
 		this._handleEvents(true);
 	}
 
@@ -46,12 +59,12 @@ export default class GameObjectManager extends cc.Component {
 	}
 
 	protected OnCreateGameObject(type: GameOjbectTypeEnum, callback: (node: cc.Node | null, gameObject?: GameObject) => void): void {
-		if (!this._prefabs.has(type)) {
+		if (!this._prefabs[this._convertedGameOjbectTypes.indexOf(type)]) {
 			callback instanceof Function && callback(null);
 			return;
 		}
 
-		const node = cc.instantiate(this._prefabs.get(type) as cc.Prefab);
+		const node = cc.instantiate(this._prefabs[this._convertedGameOjbectTypes.indexOf(type)] as cc.Prefab);
 		const gameObject = node.getComponent(GameObject) || node.addComponent(GameObject);
 		gameObject.type = type;
 
