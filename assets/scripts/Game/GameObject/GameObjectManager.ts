@@ -1,4 +1,5 @@
 import GameEvent from '../GameEvent';
+import PoolManager from '../Pool/PoolManager';
 import GameObject from './GameObject';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObjectType';
 
@@ -6,6 +7,9 @@ const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class GameObjectManager extends cc.Component {
+	@property(PoolManager)
+	protected poolManager: PoolManager | null = null;
+
 	@property({ type: GameObjectType, serializable: false })
 	protected _type: GameOjbectTypeEnum = GameObjectType.None;
 
@@ -48,7 +52,6 @@ export default class GameObjectManager extends cc.Component {
 
 
 	protected onLoad(): void {
-		cc.log(this._prefabs);
 		this._handleEvents(true);
 	}
 
@@ -59,12 +62,20 @@ export default class GameObjectManager extends cc.Component {
 	}
 
 	protected OnCreateGameObject(type: GameOjbectTypeEnum, callback: (node: cc.Node | null, gameObject?: GameObject) => void): void {
-		if (!this._prefabs[this._convertedGameOjbectTypes.indexOf(type)]) {
+		if (!this._prefabs[this._convertedGameOjbectTypes.indexOf(type)]
+			|| this.poolManager == null) {
 			callback instanceof Function && callback(null);
 			return;
 		}
 
-		const node = cc.instantiate(this._prefabs[this._convertedGameOjbectTypes.indexOf(type)] as cc.Prefab);
+		const node = this.poolManager.pools.get(this._prefabs[this._convertedGameOjbectTypes.indexOf(type)] as cc.Prefab)?.pop();
+
+		if (!node) {
+			callback instanceof Function && callback(null);
+			return;
+		}
+
+		node.active = true;
 		const gameObject = node.getComponent(GameObject) || node.addComponent(GameObject);
 		gameObject.type = type;
 
