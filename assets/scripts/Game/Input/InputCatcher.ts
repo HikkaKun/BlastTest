@@ -1,13 +1,13 @@
 import GameEvent from '../GameEvent';
-import InputDirection from './InputDirection';
-import InputType from './InputType';
+import { InputDirection, InputDirectionEnum } from './InputDirection';
+import { InputType, InputTypeEnum } from './InputType';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class InputCatcher extends cc.Component {
 	@property({ type: InputDirection })
-	public direction = InputDirection.None;
+	public direction: InputTypeEnum = InputDirection.None;
 
 	protected onEnable(): void {
 		this.handleInput(true);
