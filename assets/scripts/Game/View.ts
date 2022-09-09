@@ -4,10 +4,7 @@ import Color from '../Model/Color';
 import TileView from './TileView';
 import GameEvent from './GameEvent';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
-import GameObject from './GameObject/GameObject';
 import GameObjectManager from './GameObject/GameObjectManager';
-import { ViewColor } from './ViewColor';
-import Tile from '../Model/Tile';
 
 const { ccclass, property } = cc._decorator;
 
@@ -97,7 +94,7 @@ export default class View extends cc.Component {
 			OnTurn: (turns: number) => cc.log(turns + " turns left!"),
 			OnLose: () => cc.log("Lose!"),
 			OnWin: () => cc.log("Win!"),
-			OnChangeScore: (score: number) => cc.log("Score: " + score),
+			OnChangeScore: (score: number) => this.OnChangeScore(score),
 			OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => this.OnShuffle(oldPositions, newPositions)
 		};
 
@@ -113,7 +110,10 @@ export default class View extends cc.Component {
 			this.background.width = this.blockSize * (this.gameWidth + 1) / this.background.scaleX;
 			this.background.height = this.blockSize * (this.gameHeight + 1) / this.background.scaleY;
 		}
+	}
 
+	protected start(): void {
+		this.OnChangeScore(0);
 	}
 
 	protected onEnable(): void {
@@ -199,5 +199,9 @@ export default class View extends cc.Component {
 		}
 
 		this.tiles = newTiles;
+	}
+
+	private OnChangeScore(score: number) {
+		cc.systemEvent.emit(GameEvent.UpdateScore, score, this.winScore);
 	}
 }
