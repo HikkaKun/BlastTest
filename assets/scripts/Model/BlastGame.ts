@@ -19,6 +19,11 @@ export interface BlastGameCallbacks {
 	OnDestroyTile: (position: Position) => void;
 	OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
 	OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
+	OnTurn: (turns: number) => void;
+	OnLose: () => void;
+	OnWin: () => void;
+	OnChangeScore: (score: number) => void;
+	OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
 }
 
 export class Position {
@@ -53,6 +58,19 @@ export default class BlastGame {
 		return this._field.map(tile => tile == null ? null : Object.assign({}, tile));
 	}
 
+	public get turns() {
+		return this._turns;
+	}
+
+	private set turns(value) {
+		this._turns = value;
+		this.OnTurn(this._turns);
+
+		if (this._turns == 0) {
+			this.OnLose();
+		}
+	}
+
 	private _width;
 	private _height;
 	private _field: Array<Tile | null>;
@@ -62,11 +80,15 @@ export default class BlastGame {
 	private _turns: number;
 	private _winScore: number;
 	private _score = 0;
-	private _currentGroups = 0;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
 	private OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
+	private OnTurn: (turns: number) => void;
+	private OnLose: () => void;
+	private OnWin: () => void;
+	private OnChangeScore: (score: number) => void;
+	private OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
 
 	constructor(config: BlastGameConfig, callbacks: BlastGameCallbacks) {
 		this._field = new Array<Tile>();
@@ -82,6 +104,11 @@ export default class BlastGame {
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
 		this.OnGenerateTile = callbacks.OnGenerateTile;
+		this.OnTurn = callbacks.OnTurn;
+		this.OnWin = callbacks.OnWin;
+		this.OnLose = callbacks.OnLose;
+		this.OnChangeScore = callbacks.OnChangeScore
+		this.OnShuffle = callbacks.OnShuffle;
 	}
 
 	public indexFromPosition(x: number, y: number): number | null {
@@ -107,33 +134,8 @@ export default class BlastGame {
 			this.OnGenerateTile(this.positionFromIndex(i) as Position, true);
 		}
 
-		const checked = new Set<string>();
-
-		while (this._currentGroups < minGroups) {
-
-			for (let i = 0; i < field.length; i++) {
-
-				let isNewGroup = false;
-				const current = this.positionFromIndex(i) as Position;
-
-				const group = this.findGroup(current.x, current.y)
-
-				if (group.length < this._minTileGroupSize) continue;
-
-				for (const pos of group) {
-
-					const str = pos.toString()
-					if (checked.has(str)) continue;
-
-					checked.add(str);
-
-					isNewGroup = true;
-				}
-
-				if (isNewGroup) this._currentGroups++;
-			}
-
-			if (this._currentGroups < minGroups) this._shuffle();
+		while (this._findNumberOfGroups() < minGroups) {
+			this._shuffle();
 		}
 	}
 
@@ -148,12 +150,24 @@ export default class BlastGame {
 
 	public tapAt(x: number, y: number): void {
 		if (!this.checkBounds(x, y)) return;
+		if (this.turns == 0) return;
 
 		const tiles = this.findGroup(x, y);
 
 		if (tiles.length < this._minTileGroupSize) return;
 
 		this._destroyTiles(tiles);
+
+		this.turns--;
+
+		if (this.turns == 0) return;
+		if (this._findNumberOfGroups() != 0) return;
+
+		for (let i = 0; i < this._shuffles; i++) {
+			this._shuffle();
+		}
+
+		if (this._findNumberOfGroups() == 0) this.OnLose();
 	}
 
 	public findGroup(x: number, y: number): Array<Position> {
@@ -184,6 +198,35 @@ export default class BlastGame {
 		}
 
 		return tiles;
+	}
+
+	private _findNumberOfGroups(): number {
+		const checked = new Set<string>();
+		let groupsCount = 0;
+
+		for (let i = 0; i < this._field.length; i++) {
+
+			let isNewGroup = false;
+			const current = this.positionFromIndex(i) as Position;
+
+			const group = this.findGroup(current.x, current.y)
+
+			if (group.length < this._minTileGroupSize) continue;
+
+			for (const pos of group) {
+
+				const str = pos.toString()
+				if (checked.has(str)) continue;
+
+				checked.add(str);
+
+				isNewGroup = true;
+			}
+
+			if (isNewGroup) groupsCount++;
+		}
+
+		return groupsCount;
 	}
 
 	private _getNeighbors(x: number, y: number): Array<Position> {
@@ -282,15 +325,19 @@ export default class BlastGame {
 	}
 
 	private _shuffle(): void {
+		const oldPositions = Array<Position>();
+		const newPositions = Array<Position>();
+
 		shuffleArray(this._field);
 
 		for (let i = 0; i < this._field.length; i++) {
-			const tile = this._field[i];
+			const tile = this._field[i] as Tile;
 
-			if (!tile) continue;
-
-			this.OnMoveTile(this.positionFromIndex(tile.index) as Position, this.positionFromIndex(i) as Position);
+			oldPositions.push(this.positionFromIndex(tile.index) as Position);
 			tile.index = i;
+			newPositions.push(this.positionFromIndex(i) as Position);
 		}
+
+		this.OnShuffle(oldPositions, newPositions);
 	}
 }
