@@ -17,7 +17,7 @@ export default class TileView extends cc.Component {
 		this.tween && this.tween.stop();
 
 		this.tween = cc.tween(this.node)
-			.to(1, { x: this.x * this.view.blockSize, y: this.y * -this.view.blockSize }, { easing: "bounceOut" })
+			.to(1, { x: (this.x - this.view.gameWidth / 2 + 0.5) * this.view.blockSize, y: (this.y - this.view.gameHeight / 2 + 0.5) * -this.view.blockSize }, { easing: "bounceOut" })
 			.start();
 	}
 

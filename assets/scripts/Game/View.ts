@@ -140,8 +140,8 @@ export default class View extends cc.Component {
 		const sprite = node.getComponent(cc.Sprite);
 		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
-		node.x = forPosition.x * this.blockSize;
-		node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -this.blockSize;
+		node.x = (forPosition.x - this.gameWidth / 2 + 0.5) * this.blockSize;
+		node.y = ((fromOutside ? forPosition.y - this.game.height : forPosition.y) - this.gameHeight + 0.5) * -this.blockSize;
 
 		node.width = this.blockSize;
 		node.height = this.blockSize;
