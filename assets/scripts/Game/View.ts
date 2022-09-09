@@ -56,6 +56,12 @@ export default class View extends cc.Component {
 	@property({ min: 20 })
 	public blockSize = 40;
 
+	@property(cc.Node)
+	public maskNode: cc.Node | null = null;
+
+	@property(cc.Node)
+	public background: cc.Node | null = null;
+
 	@property([BlockConfig])
 	public blockConfigs: Array<BlockConfig> = [];
 
@@ -97,6 +103,17 @@ export default class View extends cc.Component {
 
 		this.game = new BlastGame(config, callbacks);
 		this.game.initField();
+
+		if (this.maskNode) {
+			this.maskNode.width = this.blockSize * (this.gameWidth + 1);
+			this.maskNode.height = this.blockSize * (this.gameHeight + 1);
+		}
+
+		if (this.background) {
+			this.background.width = this.blockSize * (this.gameWidth + 1) / this.background.scaleX;
+			this.background.height = this.blockSize * (this.gameHeight + 1) / this.background.scaleY;
+		}
+
 	}
 
 	protected onEnable(): void {
@@ -141,7 +158,7 @@ export default class View extends cc.Component {
 		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
 		node.x = (forPosition.x - this.gameWidth / 2 + 0.5) * this.blockSize;
-		node.y = ((fromOutside ? forPosition.y - this.game.height : forPosition.y) - this.gameHeight + 0.5) * -this.blockSize;
+		node.y = ((fromOutside ? forPosition.y - this.game.height : forPosition.y) - this.gameHeight / 2 + 0.5) * -this.blockSize;
 
 		node.width = this.blockSize;
 		node.height = this.blockSize;
