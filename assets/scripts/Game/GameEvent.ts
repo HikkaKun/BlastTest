@@ -7,6 +7,7 @@ const GameEvent = cc.Enum({
 
 	TileTap: 10,
 	UpdateScore: 11,
+	UpdateTurns: 12,
 });
 
 export default GameEvent;

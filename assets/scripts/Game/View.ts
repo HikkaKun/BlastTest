@@ -91,7 +91,7 @@ export default class View extends cc.Component {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
 			OnGenerateTile: (forPosition, fromOutside) => this.OnGenerateTile(forPosition, fromOutside),
 			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition),
-			OnTurn: (turns: number) => cc.log(turns + " turns left!"),
+			OnTurn: (turns: number) => this.OnTurn(turns),
 			OnLose: () => cc.log("Lose!"),
 			OnWin: () => cc.log("Win!"),
 			OnChangeScore: (score: number) => this.OnChangeScore(score),
@@ -114,6 +114,7 @@ export default class View extends cc.Component {
 
 	protected start(): void {
 		this.OnChangeScore(0);
+		this.OnTurn(this.turns);
 	}
 
 	protected onEnable(): void {
@@ -203,5 +204,9 @@ export default class View extends cc.Component {
 
 	private OnChangeScore(score: number) {
 		cc.systemEvent.emit(GameEvent.UpdateScore, score, this.winScore);
+	}
+
+	private OnTurn(turns: number) {
+		cc.systemEvent.emit(GameEvent.UpdateTurns, turns, this.turns);
 	}
 }
