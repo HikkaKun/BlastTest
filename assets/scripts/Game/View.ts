@@ -3,13 +3,17 @@ import BlastGame, { BlastGameConfig, BlastGameCallbacks, Position } from '../Mod
 import Color from '../Model/Color';
 import TileView from './TileView';
 import GameEvent from './GameEvent';
-import { GameObjectType } from './GameObject/GameObjectType';
+import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
 import GameObject from './GameObject/GameObject';
+import GameObjectManager from './GameObject/GameObjectManager';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class View extends cc.Component {
+	@property({ type: GameObjectType })
+	public tilePrefab: GameOjbectTypeEnum = GameObjectType.None;
+
 	@property([BlockConfig])
 	public blockConfigs: Array<BlockConfig> = [];
 
@@ -71,31 +75,32 @@ export default class View extends cc.Component {
 	}
 
 	private OnGenerateTile(forPosition: Position, fromOutside: boolean) {
-		cc.systemEvent.emit(GameEvent.CreateGameObject, GameObjectType.Tile, (node: cc.Node) => {
-			node.parent = this.node;
+		const node = GameObjectManager.createGameOjbect(this.tilePrefab);
 
-			const view = node.getComponent(TileView);
-			view.id = forPosition.toString();
-			view.x = forPosition.x;
-			view.y = forPosition.y;
+		if (!node) return;
 
-			const sprite = node.getComponent(cc.Sprite);
-			sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
+		node.parent = this.node;
 
-			node.x = forPosition.x * 40;
-			node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -40;
+		const view = node.getComponent(TileView);
+		view.id = forPosition.toString();
+		view.x = forPosition.x;
+		view.y = forPosition.y;
 
-			node.width = 40;
-			node.height = 40;
+		const sprite = node.getComponent(cc.Sprite);
+		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
-			node.scale = 0;
-			cc.tween(node)
-				.to(0.25, { scale: 1, y: view.y * -40 })
-				.start();
+		node.x = forPosition.x * 40;
+		node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -40;
 
-			this.tiles.set(view.id, view);
-		});
+		node.width = 40;
+		node.height = 40;
 
+		node.scale = 0;
+		cc.tween(node)
+			.to(0.25, { scale: 1, y: view.y * -40 })
+			.start();
+
+		this.tiles.set(view.id, view);
 	}
 
 	private OnMoveTile(oldPosition: Position, newPosition: Position) {

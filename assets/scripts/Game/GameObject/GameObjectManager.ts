@@ -50,35 +50,35 @@ export default class GameObjectManager extends cc.Component {
 	@property([GameObjectType])
 	protected _convertedGameOjbectTypes = new Array<GameOjbectTypeEnum>;
 
+	protected static _staticPrefabs = new Map<GameOjbectTypeEnum, cc.Prefab>;
+
+	protected static _staticPoolManager: PoolManager;
 
 	protected onLoad(): void {
+		if (this.poolManager) GameObjectManager._staticPoolManager = this.poolManager;
+
+		for (let i = 0; i < this._convertedGameOjbectTypes.length; i++) {
+			GameObjectManager._staticPrefabs.set(this._convertedGameOjbectTypes[i], this._prefabs[i] as cc.Prefab);
+		}
+
 		this._handleEvents(true);
 	}
 
 	protected _handleEvents(isOn: boolean) {
 		const func = isOn ? 'on' : 'off';
-
-		cc.systemEvent[func](GameEvent.CreateGameObject, this.OnCreateGameObject, this);
 	}
 
-	protected OnCreateGameObject(type: GameOjbectTypeEnum, callback: (node: cc.Node | null, gameObject?: GameObject) => void): void {
-		if (!this._prefabs[this._convertedGameOjbectTypes.indexOf(type)]
-			|| this.poolManager == null) {
-			callback instanceof Function && callback(null);
-			return;
-		}
+	public static createGameOjbect(type: GameOjbectTypeEnum): cc.Node | null {
+		if (!this._staticPrefabs.has(type) || this._staticPoolManager == null) return null;
 
-		const node = this.poolManager.pools.get(this._prefabs[this._convertedGameOjbectTypes.indexOf(type)] as cc.Prefab)?.pop();
+		const node = this._staticPoolManager.pools.get(this._staticPrefabs.get(type) as cc.Prefab)?.pop();
 
-		if (!node) {
-			callback instanceof Function && callback(null);
-			return;
-		}
+		if (!node) return null;
 
 		node.active = true;
 		const gameObject = node.getComponent(GameObject) || node.addComponent(GameObject);
 		gameObject.type = type;
 
-		callback instanceof Function && callback(node, gameObject);
+		return node;
 	}
 }

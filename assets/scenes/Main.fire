@@ -662,6 +662,7 @@
       "__id__": 15
     },
     "_enabled": true,
+    "tilePrefab": 1,
     "blockConfigs": [
       {
         "__id__": 17
