@@ -128,12 +128,12 @@ export default class BlastGame {
 	public indexFromPosition(x: number, y: number): number | null {
 		if (!this.checkBounds(x, y)) return null;
 
-		return x % this._width + y * this._height;
+		return x % this._width + y * this._width;
 	}
 
 	public positionFromIndex(index: number): Position | null {
 		const x = index % this.width;
-		const y = Math.floor(index / this.height);
+		const y = Math.floor(index / this.width);
 
 		if (!this.checkBounds(x, y)) return null;
 
