@@ -9,3 +9,16 @@ export function randomEnumKey<T extends object>(anEnum: T, limitTo?: number): T[
 
 export type EnumType<T> = T[keyof T];
 
+export function shuffleArray(array: Array<unknown>) {
+	let currentIndex = array.length, randomIndex;
+
+	while (currentIndex != 0) {
+
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+	}
+
+	return array;
+}
