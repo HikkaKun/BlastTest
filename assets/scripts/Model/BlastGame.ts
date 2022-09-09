@@ -67,7 +67,20 @@ export default class BlastGame {
 		this.OnTurn(this._turns);
 
 		if (this._turns == 0) {
-			this.OnLose();
+			this._lose();
+		}
+	}
+
+	public get score() {
+		return this._score;
+	}
+
+	private set score(value) {
+		this._score = value;
+		this.OnChangeScore(this._score);
+
+		if (this._score >= this._winScore) {
+			this._win();
 		}
 	}
 
@@ -80,6 +93,7 @@ export default class BlastGame {
 	private _turns: number;
 	private _winScore: number;
 	private _score = 0;
+	private _canMakeTurns = true;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -149,6 +163,7 @@ export default class BlastGame {
 	}
 
 	public tapAt(x: number, y: number): void {
+		if (!this._canMakeTurns) return;
 		if (!this.checkBounds(x, y)) return;
 		if (this.turns == 0) return;
 
@@ -156,6 +171,7 @@ export default class BlastGame {
 
 		if (tiles.length < this._minTileGroupSize) return;
 
+		this.score += this._pointsForTiles(tiles);
 		this._destroyTiles(tiles);
 
 		this.turns--;
@@ -167,7 +183,7 @@ export default class BlastGame {
 			this._shuffle();
 		}
 
-		if (this._findNumberOfGroups() == 0) this.OnLose();
+		if (this._findNumberOfGroups() == 0) this._lose();
 	}
 
 	public findGroup(x: number, y: number): Array<Position> {
@@ -339,5 +355,29 @@ export default class BlastGame {
 		}
 
 		this.OnShuffle(oldPositions, newPositions);
+	}
+
+	private _pointsForTiles(positions: Array<Position>): number {
+		let points = 0;
+
+		for (const pos of positions) {
+			points += this.tileAt(pos.x, pos.y)?.points ?? 0;
+		}
+
+		return points;
+	}
+
+	private _lose(): void {
+		if (!this._canMakeTurns) return;
+
+		this._canMakeTurns = false;
+		this.OnLose();
+	}
+
+	private _win(): void {
+		if (!this._canMakeTurns) return;
+
+		this._canMakeTurns = false;
+		this.OnWin();
 	}
 }
