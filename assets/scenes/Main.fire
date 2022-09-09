@@ -399,10 +399,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 35
+        "__id__": 36
       },
       {
-        "__id__": 36
+        "__id__": 37
       }
     ],
     "_prefab": null,
@@ -1020,6 +1020,9 @@
     "_components": [
       {
         "__id__": 34
+      },
+      {
+        "__id__": 35
       }
     ],
     "_prefab": null,
@@ -1410,6 +1413,22 @@
     "_N$alphaThreshold": 0.1,
     "_N$inverted": false,
     "_id": "6dhYFf/aFKtISZevr+IWRQ"
+  },
+  {
+    "__type__": "d4bccks9A1Iq4Jq71+DcHp9",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 26
+    },
+    "_enabled": true,
+    "bar": {
+      "__id__": 31
+    },
+    "stateOnStart": 0,
+    "progress": 0,
+    "animationSpeed": 2000,
+    "_id": "4ceiOEuHNHFKbE56DPli/Q"
   },
   {
     "__type__": "cc.Widget",
