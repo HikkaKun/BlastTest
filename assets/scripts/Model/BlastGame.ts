@@ -1,4 +1,4 @@
-import { randomEnumKey } from '../Utilities';
+import { randomEnumKey, shuffleArray } from '../Utilities';
 import Color from './Color';
 import Tile from './Tile';
 
@@ -58,6 +58,11 @@ export default class BlastGame {
 	private _field: Array<Tile | null>;
 	private _minTileGroupSize: number;
 	private _colors: number;
+	private _shuffles: number;
+	private _turns: number;
+	private _winScore: number;
+	private _score = 0;
+	private _currentGroups = 0;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -70,6 +75,9 @@ export default class BlastGame {
 		this._height = config.height;
 		this._minTileGroupSize = config.minTilesGroupSize || 2;
 		this._colors = config.colors || 5;
+		this._shuffles = config.shuffles ?? 1;
+		this._turns = config.turnsNumber;
+		this._winScore = config.winScore;
 
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
@@ -91,12 +99,41 @@ export default class BlastGame {
 		return new Position(x, y);
 	}
 
-	public initField(): void {
+	public initField(minGroups = 1): void {
 		const field = this._field;
 
 		for (let i = 0; i < field.length; i++) {
-			field[i] = this._generateTile();
+			field[i] = this._generateTile(i);
 			this.OnGenerateTile(this.positionFromIndex(i) as Position, true);
+		}
+
+		const checked = new Set<string>();
+
+		while (this._currentGroups < minGroups) {
+
+			for (let i = 0; i < field.length; i++) {
+
+				let isNewGroup = false;
+				const current = this.positionFromIndex(i) as Position;
+
+				const group = this.findGroup(current.x, current.y)
+
+				if (group.length < this._minTileGroupSize) continue;
+
+				for (const pos of group) {
+
+					const str = pos.toString()
+					if (checked.has(str)) continue;
+
+					checked.add(str);
+
+					isNewGroup = true;
+				}
+
+				if (isNewGroup) this._currentGroups++;
+			}
+
+			if (this._currentGroups < minGroups) this._shuffle();
 		}
 	}
 
@@ -168,8 +205,11 @@ export default class BlastGame {
 		return neighbors;
 	}
 
-	private _generateTile(): Tile {
-		return new Tile({ color: randomEnumKey(Color, this._colors) });
+	private _generateTile(index: number): Tile {
+		return new Tile({
+			index: index,
+			color: randomEnumKey(Color, this._colors)
+		});
 	}
 
 	private _destroyTiles(tiles: Array<Position>): void {
@@ -201,14 +241,14 @@ export default class BlastGame {
 
 		if (bottomEmptyY == -1) return;
 
-		const tiles = new Array<{ oldPosition: Position, tile: Tile }>;
+		const tiles = new Array<Tile>;
 
 		let y: number;
 
 		for (y = bottomEmptyY - 1; y >= 0; y--) {
 			const tile = this.tileAt(x, y)
 			if (tile != null) {
-				tiles.push({ oldPosition: new Position(x, y), tile });
+				tiles.push(tile);
 				const index = this.indexFromPosition(x, y) as number;
 				this._field[index] = null;
 			}
@@ -219,11 +259,12 @@ export default class BlastGame {
 		while (y >= 0) {
 			const index = this.indexFromPosition(x, y) as number;
 			if (tiles.length > 0) {
-				const oldTile = tiles.shift() as { oldPosition: Position, tile: Tile };
-				this._field[index] = oldTile.tile;
-				this.OnMoveTile(oldTile.oldPosition, new Position(x, y));
+				const tile = tiles.shift() as Tile;
+				this._field[index] = tile;
+				this.OnMoveTile(this.positionFromIndex(tile.index) as Position, new Position(x, y));
+				tile.index = index;
 			} else {
-				this._field[index] = this._generateTile();
+				this._field[index] = this._generateTile(index);
 				this.OnGenerateTile(this.positionFromIndex(index) as Position, true);
 			}
 
@@ -238,5 +279,18 @@ export default class BlastGame {
 		if (index1 == null || index2 == null) return;
 
 		[this._field[index1], this._field[index2]] = [this._field[index2], this._field[index1]];
+	}
+
+	private _shuffle(): void {
+		shuffleArray(this._field);
+
+		for (let i = 0; i < this._field.length; i++) {
+			const tile = this._field[i];
+
+			if (!tile) continue;
+
+			this.OnMoveTile(this.positionFromIndex(tile.index) as Position, this.positionFromIndex(i) as Position);
+			tile.index = i;
+		}
 	}
 }
