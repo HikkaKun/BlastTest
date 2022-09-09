@@ -9,6 +9,6 @@ export default class Tile {
 	public color: Color;
 
 	constructor(config?: TileConfig) {
-		this.color = config?.color || randomEnumKey(Color);
+		this.color = config?.color ?? randomEnumKey(Color);
 	}
 }

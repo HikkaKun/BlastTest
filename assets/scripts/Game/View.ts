@@ -6,19 +6,52 @@ import GameEvent from './GameEvent';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
 import GameObject from './GameObject/GameObject';
 import GameObjectManager from './GameObject/GameObjectManager';
+import { ViewColor } from './ViewColor';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class View extends cc.Component {
+
+	//#region game settings
+
+	@property({ min: 1, step: 1 })
+	public minTileGroupSize = 2;
+
+	@property({ min: 2, max: Object.keys(Color).length / 2 })
+	public colors = 5;
+
+	@property({ min: 3, step: 1 })
+	public gameWidth = 7;
+
+	@property({ min: 3, step: 1 })
+	public gameHeight = 7;
+
+	@property({ min: 1, step: 1 })
+	public winScore = 25;
+
+	@property({ min: 1, step: 1 })
+	public turns = 25;
+
+	@property({ min: 0, step: 1 })
+	public shuffles = 1;
+
+	@property({ min: 0, step: 1 })
+	public boosterRadius = 2;
+
+	@property({ min: 1, step: 1 })
+	public minSuperTileGroupSize = 5;
+
+	//#endregion
+
+	@property(cc.Prefab)
+	public tileViewPrefab: cc.Prefab | null = null;
+
 	@property({ type: GameObjectType })
 	public tilePrefab: GameOjbectTypeEnum = GameObjectType.None;
 
 	@property([BlockConfig])
 	public blockConfigs: Array<BlockConfig> = [];
-
-	@property(cc.Prefab)
-	public tileViewPrefab: cc.Prefab | null = null;
 
 	public blocks = new Map<Color, cc.SpriteFrame>;
 
@@ -32,10 +65,15 @@ export default class View extends cc.Component {
 		}
 
 		const config: BlastGameConfig = {
-			width: 9,
-			height: 9,
-			winScore: 25,
-			turnsNumber: 10
+			width: this.gameWidth,
+			height: this.gameHeight,
+			winScore: this.winScore,
+			turnsNumber: this.turns,
+			minTilesGroupSize: this.minTileGroupSize,
+			colors: this.colors,
+			shuffles: this.shuffles,
+			boosterRadius: this.boosterRadius,
+			minSuperTileGroupSize: this.minSuperTileGroupSize
 		};
 		const callbacks: BlastGameCallbacks = {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
@@ -95,9 +133,10 @@ export default class View extends cc.Component {
 		node.width = 40;
 		node.height = 40;
 
-		node.scale = 0;
+		node.scale = 1;
+		node.opacity = 0;
 		cc.tween(node)
-			.to(0.25, { scale: 1, y: view.y * -40 })
+			.to(1, { y: view.y * -40, opacity: 255 }, { easing: "bounceOut" })
 			.start();
 
 		this.tiles.set(view.id, view);
@@ -114,7 +153,7 @@ export default class View extends cc.Component {
 		this.tiles.set(newPosition.toString(), tile);
 		const node = tile.node;
 		cc.tween(node)
-			.to(0.25, { x: tile.x * 40, y: tile.y * -40 })
+			.to(1, { x: tile.x * 40, y: tile.y * -40 }, { easing: "bounceOut" })
 			.start();
 
 	}

@@ -662,6 +662,18 @@
       "__id__": 15
     },
     "_enabled": true,
+    "minTileGroupSize": 2,
+    "colors": 5,
+    "gameWidth": 7,
+    "gameHeight": 7,
+    "winScore": 25,
+    "turns": 25,
+    "shuffles": 1,
+    "boosterRadius": 2,
+    "minSuperTileGroupSize": 5,
+    "tileViewPrefab": {
+      "__uuid__": "77094d11-d242-423b-a29e-444c37505c93"
+    },
     "tilePrefab": 1,
     "blockConfigs": [
       {
@@ -680,9 +692,6 @@
         "__id__": 21
       }
     ],
-    "tileViewPrefab": {
-      "__uuid__": "77094d11-d242-423b-a29e-444c37505c93"
-    },
     "_id": "60gGCSAeREGZy7zhe1Q5Mn"
   },
   {
