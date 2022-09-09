@@ -9,13 +9,22 @@ export default class ProgressBar extends cc.Component {
 	protected stateOnStart = 0;
 
 	@property({ min: 0, max: 1 })
-	public progress = 1
+	private _progress = 1;
 
-	@property()
-	public animationSpeed = 100;
+	@property({ min: 0, max: 1 })
+	public get progress() {
+		return this._progress;
+	}
+
+	public set progress(value) {
+		this._progress = Math.min(1, Math.max(value, 0));
+	}
+
+	@property({ min: 0.1, max: 1 })
+	public animationSpeed = 0.1;
 
 	protected onLoad() {
-		this.bar.x = this._calculateBarX(this.stateOnStart)
+		if (this.bar) this.bar.x = this._calculateBarX(this.stateOnStart)
 	}
 
 	protected update(dt: number) {
@@ -25,7 +34,7 @@ export default class ProgressBar extends cc.Component {
 
 		if (this.bar.x == destination) return;
 
-		this.bar.x += (this.bar.x < destination ? 1 : -1) * Math.min(Math.abs(Math.abs(this.bar.x) - Math.abs(destination)), this.animationSpeed * dt);
+		this.bar.x = (this.bar.x * (1 - this.animationSpeed) + destination * this.animationSpeed);
 	}
 
 	protected _calculateBarX(progress?: number): number {
