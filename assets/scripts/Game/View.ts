@@ -7,6 +7,7 @@ import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType'
 import GameObject from './GameObject/GameObject';
 import GameObjectManager from './GameObject/GameObjectManager';
 import { ViewColor } from './ViewColor';
+import Tile from '../Model/Tile';
 
 const { ccclass, property } = cc._decorator;
 
@@ -44,14 +45,22 @@ export default class View extends cc.Component {
 
 	//#endregion
 
+	//#region view settings
+
 	@property(cc.Prefab)
 	public tileViewPrefab: cc.Prefab | null = null;
 
 	@property({ type: GameObjectType })
 	public tilePrefab: GameOjbectTypeEnum = GameObjectType.None;
 
+	@property({ min: 20 })
+	public blockSize = 40;
+
 	@property([BlockConfig])
 	public blockConfigs: Array<BlockConfig> = [];
+
+	//#endregion 
+
 
 	public blocks = new Map<Color, cc.SpriteFrame>;
 
@@ -78,7 +87,12 @@ export default class View extends cc.Component {
 		const callbacks: BlastGameCallbacks = {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
 			OnGenerateTile: (forPosition, fromOutside) => this.OnGenerateTile(forPosition, fromOutside),
-			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition)
+			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition),
+			OnTurn: (turns: number) => cc.log(turns + " turns left!"),
+			OnLose: () => cc.log("Lose!"),
+			OnWin: () => cc.log("Win!"),
+			OnChangeScore: (score: number) => cc.log("Score: " + score),
+			OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => this.OnShuffle(oldPositions, newPositions)
 		};
 
 		this.game = new BlastGame(config, callbacks);
@@ -105,10 +119,8 @@ export default class View extends cc.Component {
 
 	private OnDestroyTile(position: Position) {
 		const tile = this.tiles.get(position.toString()) as TileView;
-		cc.tween(tile.node)
-			.to(0.25, { scale: 0 })
-			.call(() => { tile.node.getComponent(GameObject).kill() })
-			.start();
+		tile.tweenDestroy();
+
 		this.tiles.delete(position.toString());
 	}
 
@@ -119,27 +131,25 @@ export default class View extends cc.Component {
 
 		node.parent = this.node;
 
-		const view = node.getComponent(TileView);
-		view.id = forPosition.toString();
-		view.x = forPosition.x;
-		view.y = forPosition.y;
+		const tile = node.getComponent(TileView);
+		tile.view = this;
+		tile.id = forPosition.toString();
+		tile.x = forPosition.x;
+		tile.y = forPosition.y;
 
 		const sprite = node.getComponent(cc.Sprite);
 		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
-		node.x = forPosition.x * 40;
-		node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -40;
+		node.x = forPosition.x * this.blockSize;
+		node.y = (fromOutside ? forPosition.y - this.game.height : forPosition.y) * -this.blockSize;
 
-		node.width = 40;
-		node.height = 40;
+		node.width = this.blockSize;
+		node.height = this.blockSize;
 
 		node.scale = 1;
-		node.opacity = 0;
-		cc.tween(node)
-			.to(1, { y: view.y * -40, opacity: 255 }, { easing: "bounceOut" })
-			.start();
+		tile.tweenMove();
 
-		this.tiles.set(view.id, view);
+		this.tiles.set(tile.id, tile);
 	}
 
 	private OnMoveTile(oldPosition: Position, newPosition: Position) {
@@ -151,10 +161,26 @@ export default class View extends cc.Component {
 
 		this.tiles.delete(oldPosition.toString());
 		this.tiles.set(newPosition.toString(), tile);
-		const node = tile.node;
-		cc.tween(node)
-			.to(1, { x: tile.x * 40, y: tile.y * -40 }, { easing: "bounceOut" })
-			.start();
 
+		tile.tweenMove();
+	}
+
+	private OnShuffle(oldPositions: Array<Position>, newPositions: Array<Position>) {
+		const newTiles = new Map<string, TileView>();
+
+		for (let i = 0; i < oldPositions.length; i++) {
+			const tile = this.tiles.get(oldPositions[i].toString()) as TileView;
+
+			const newPos = newPositions[i];
+			tile.id = newPos.toString() as string;
+			tile.x = newPos.x;
+			tile.y = newPos.y;
+
+			tile.tweenMove();
+
+			newTiles.set(newPos.toString(), tile);
+		}
+
+		this.tiles = newTiles;
 	}
 }
