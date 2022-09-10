@@ -5,6 +5,7 @@ import TileView from './TileView';
 import GameEvent from './GameEvent';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
 import GameObjectManager from './GameObject/GameObjectManager';
+import BonusType from '../Model/BonusType';
 
 const { ccclass, property } = cc._decorator;
 
@@ -39,6 +40,9 @@ export default class View extends cc.Component {
 
 	@property({ min: 1, step: 1 })
 	public minSuperTileGroupSize = 5;
+
+	@property({ min: 0, step: 1, max: 99 })
+	public swapBonuses = 5;
 
 	//#endregion
 
@@ -95,7 +99,8 @@ export default class View extends cc.Component {
 			OnLose: () => cc.log("Lose!"),
 			OnWin: () => cc.log("Win!"),
 			OnChangeScore: (score: number) => this.OnChangeScore(score),
-			OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => this.OnShuffle(oldPositions, newPositions)
+			OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => this.OnShuffle(oldPositions, newPositions),
+			OnUpdateBonusInfo: (type: BonusType, count: number) => this.OnUpdateBonusInfo(type, count)
 		};
 
 		this.game = new BlastGame(config, callbacks);
@@ -114,6 +119,7 @@ export default class View extends cc.Component {
 
 	protected start(): void {
 		this.OnChangeScore(0);
+		this.OnUpdateBonusInfo(BonusType.Swap, this.swapBonuses);
 		this.OnTurn(this.turns);
 	}
 
@@ -208,5 +214,9 @@ export default class View extends cc.Component {
 
 	private OnTurn(turns: number) {
 		cc.systemEvent.emit(GameEvent.UpdateTurns, turns, this.turns);
+	}
+
+	private OnUpdateBonusInfo(type: BonusType, count: number) {
+
 	}
 }

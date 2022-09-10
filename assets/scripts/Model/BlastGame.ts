@@ -1,4 +1,5 @@
 import { randomEnumKey, shuffleArray } from '../Utilities';
+import BonusType from './BonusType';
 import Color from './Color';
 import Tile from './Tile';
 
@@ -10,6 +11,7 @@ export interface BlastGameConfig {
 	shuffles?: number;
 	winScore: number;
 	turnsNumber: number;
+	swaps?: number;
 
 	boosterRadius?: number;
 	minSuperTileGroupSize?: number;
@@ -24,6 +26,7 @@ export interface BlastGameCallbacks {
 	OnWin: () => void;
 	OnChangeScore: (score: number) => void;
 	OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
+	OnUpdateBonusInfo: (type: BonusType, count: number) => void;
 }
 
 export class Position {
@@ -84,6 +87,15 @@ export default class BlastGame {
 		}
 	}
 
+	public get swaps() {
+		return this._swaps;
+	}
+
+	public set swaps(value) {
+		this._swaps = value;
+		this.OnUpdateBonusInfo(BonusType.Swap, value);
+	}
+
 	private _width;
 	private _height;
 	private _field: Array<Tile | null>;
@@ -94,6 +106,7 @@ export default class BlastGame {
 	private _winScore: number;
 	private _score = 0;
 	private _canMakeTurns = true;
+	private _swaps: number;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -103,6 +116,7 @@ export default class BlastGame {
 	private OnWin: () => void;
 	private OnChangeScore: (score: number) => void;
 	private OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
+	private OnUpdateBonusInfo: (type: BonusType, count: number) => void;
 
 	constructor(config: BlastGameConfig, callbacks: BlastGameCallbacks) {
 		this._field = new Array<Tile>();
@@ -114,6 +128,7 @@ export default class BlastGame {
 		this._shuffles = config.shuffles ?? 1;
 		this._turns = config.turnsNumber;
 		this._winScore = config.winScore;
+		this._swaps = config.swaps ?? 0;
 
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
@@ -121,8 +136,9 @@ export default class BlastGame {
 		this.OnTurn = callbacks.OnTurn;
 		this.OnWin = callbacks.OnWin;
 		this.OnLose = callbacks.OnLose;
-		this.OnChangeScore = callbacks.OnChangeScore
+		this.OnChangeScore = callbacks.OnChangeScore;
 		this.OnShuffle = callbacks.OnShuffle;
+		this.OnUpdateBonusInfo = callbacks.OnUpdateBonusInfo;
 	}
 
 	public indexFromPosition(x: number, y: number): number | null {
@@ -331,11 +347,11 @@ export default class BlastGame {
 		}
 	}
 
-	private _swap(x1: number, y1: number, x2: number, y2: number): void {
+	public swap(x1: number, y1: number, x2: number, y2: number): void {
 		const index1 = this.indexFromPosition(x1, y1);
 		const index2 = this.indexFromPosition(x2, y2);
 
-		if (index1 == null || index2 == null) return;
+		if (index1 == null || index2 == null || index1 == index2) return;
 
 		[this._field[index1], this._field[index2]] = [this._field[index2], this._field[index1]];
 	}
