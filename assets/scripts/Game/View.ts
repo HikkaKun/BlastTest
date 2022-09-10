@@ -217,6 +217,6 @@ export default class View extends cc.Component {
 	}
 
 	private OnUpdateBonusInfo(type: BonusType, count: number) {
-
+		cc.systemEvent.emit(GameEvent.UpdateBonusInfo, type, count);
 	}
 }
