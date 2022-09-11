@@ -103,7 +103,7 @@ export default class View extends cc.Component {
 		const callbacks: BlastGameCallbacks = {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
 			OnGenerateTile: (forPosition, fromOutside) => this.OnGenerateTile(forPosition, fromOutside),
-			OnMoveTile: (oldPosition, newPosition, isSwap) => this.OnMoveTile(oldPosition, newPosition, isSwap),
+			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition),
 			OnTurn: (turns: number) => this.OnTurn(turns),
 			OnLose: () => cc.log("Lose!"),
 			OnWin: () => cc.log("Win!"),
