@@ -6,6 +6,10 @@ export enum Color {
 	Green,
 
 	Bomb,
+
+	SuperHorizontal,
+	SuperVertical,
+	SuperAll,
 }
 
 export const ColorsCount = 5;

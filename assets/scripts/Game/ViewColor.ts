@@ -7,7 +7,10 @@ export const ViewColor = cc.Enum({
 	Purple: Color.Purple,
 	Red: Color.Red,
 	Yellow: Color.Yellow,
-	Bomb: Color.Bomb
+	Bomb: Color.Bomb,
+	SuperHorizontal: Color.SuperHorizontal,
+	SuperVertical: Color.SuperVertical,
+	SuperAll: Color.SuperAll,
 });
 
 export type ViewColorEnum = EnumType<typeof ViewColor>;

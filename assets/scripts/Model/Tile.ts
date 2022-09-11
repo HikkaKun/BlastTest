@@ -11,6 +11,7 @@ export default class Tile {
 	public color: Color;
 	public index: number;
 	public points: number;
+	public isActivated = false;
 
 	constructor(config: TileConfig) {
 		this.color = config?.color ?? randomEnumKey(Color, ColorsCount);

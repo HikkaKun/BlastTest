@@ -198,7 +198,10 @@ export default class View extends cc.Component {
 
 	private OnDestroyTile(position: Position) {
 		const index = position.toString();
-		const tile = this.tiles.get(index) as TileView;
+		const tile = this.tiles.get(index);
+
+		if (!tile) return;
+
 		tile.tweenDestroy();
 
 		this.tiles.delete(index);

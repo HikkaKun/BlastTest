@@ -111,6 +111,7 @@ export default class BlastGame {
 	private _swaps: number;
 	private _bombChance: number;
 	private _boosterRadius: number;
+	private _minSuperTileGroupSize: number;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -135,6 +136,7 @@ export default class BlastGame {
 		this._swaps = config.swaps ?? 0;
 		this._bombChance = config.bombChance ?? 0.01;
 		this._boosterRadius = config.boosterRadius ?? 2;
+		this._minSuperTileGroupSize = config.minSuperTileGroupSize ?? 6;
 
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
@@ -189,18 +191,41 @@ export default class BlastGame {
 		if (!this.checkBounds(x, y)) return;
 		if (this.turns == 0) return;
 
-		switch (this.tileAt(x, y)?.color) {
-			case Color.Bomb:
-				this._explodeAt(x, y, this._boosterRadius);
+		const tile = this.tileAt(x, y) as Tile;
 
-				return;
+		if (this._isTileBonus(tile)) {
+			this._activateBonus(tile);
+
+			for (let i = 0; i < this.width; i++) {
+				this._updateColumn(i);
+			}
+			return;
 		}
 
 		const tiles = this.findGroup(x, y);
 
 		if (tiles.length < this._minTileGroupSize) return;
 
+		if (tiles.length >= this._minSuperTileGroupSize) {
+			const position = new Position(x, y);
+			const posIndex = position.toString();
+
+			tiles.splice(tiles.indexOf(tiles.filter(tile => tile.toString() == posIndex)[0]), 1);
+
+			this.OnDestroyTile(position);
+
+			const index = this.indexFromPosition(x, y) as number;
+
+			this._field[index] = this._generateSuperTile(index);
+
+			this.OnGenerateTile(position, false);
+		}
+
 		this._destroyTiles(tiles);
+
+		for (let i = 0; i < this.width; i++) {
+			this._updateColumn(i);
+		}
 
 		this.turns--;
 
@@ -245,7 +270,11 @@ export default class BlastGame {
 			const current = frontier.shift() as Position;
 			const neighbors = this._getNeighbors(current.x, current.y)
 			for (const next of neighbors) {
-				if (!checkFunc(this.tileAt(current.x, current.y) as Tile, this.tileAt(next.x, next.y) as Tile)) continue;
+				const tileA = this.tileAt(current.x, current.y);
+				const tileB = this.tileAt(next.x, next.y);
+
+				if (!tileA || !tileB) continue;
+				if (!checkFunc(tileA, tileB)) continue;
 				if (visited.has(next.toString())) continue;
 
 				frontier.push(next);
@@ -315,41 +344,22 @@ export default class BlastGame {
 	private _destroyTiles(tiles: Array<Position>): void {
 		this.score += this._pointsForTiles(tiles);
 
-		const columnsToUpdate = new Set<number>;
-
-		const bombs = Array<Position>();
-
 		for (let i = 0; i < tiles.length; i++) {
-			const tile = tiles[i];
-			const { x, y } = tile;
+			const position = tiles[i];
+			const { x, y } = position;
 			const index = this.indexFromPosition(x, y) as number;
 
-			if (this._field[index]?.color == Color.Bomb) {
-				bombs.push(new Position(x, y));
-			}
-		}
+			const tile = this.tileAt(x, y);
+			if (tile != null) {
+				if (this._isTileBonus(tile)) {
+					this._activateBonus(tile);
+				}
 
-		for (let i = 0; i < tiles.length; i++) {
-			const tile = tiles[i];
-			const { x, y } = tile;
-			const index = this.indexFromPosition(x, y) as number;
-
-			if (this._field[index] != null) {
 				this._field[index] = null;
 
-				this.OnDestroyTile(tile);
+				this.OnDestroyTile(position);
 			}
-
-			columnsToUpdate.add(x);
 		}
-
-		for (const bomb of bombs) {
-			this._explodeAt(bomb.x, bomb.y, this._boosterRadius);
-		}
-
-		columnsToUpdate.forEach((x) => {
-			this._updateColumn(x);
-		})
 	}
 
 	private _updateColumn(x: number): void {
@@ -460,5 +470,82 @@ export default class BlastGame {
 		});
 
 		this._destroyTiles(tiles);
+	}
+
+	private _generateSuperTile(index: number): Tile {
+		const types = [Color.Bomb, Color.SuperVertical, Color.SuperHorizontal, Color.SuperAll];
+
+		return new Tile({
+			index: index,
+			color: types[Math.floor(Math.random() * types.length)],
+		});
+	}
+
+	private _destroyRow(y: number): void {
+		this._destroyTiles(this._getTileLine(0, y, this.width - 1, y));
+	}
+
+	private _destroyColumn(x: number): void {
+		this._destroyTiles(this._getTileLine(x, 0, x, this._height - 1));
+	}
+
+	private _destroyAll(): void {
+		const tiles = Array<Position>();
+		for (let i = 0; i < this._field.length; i++) {
+			tiles.push(this.positionFromIndex(i) as Position);
+		}
+
+		this._destroyTiles(tiles);
+	}
+
+	private _getTileLine(x1: number, y1: number, x2: number, y2: number): Array<Position> {
+		if (!this.checkBounds(x1, y1)) return [];
+		if (!this.checkBounds(x2, y2)) return [];
+
+		const tiles = Array<Position>();
+
+		const dx = Math.abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
+		const dy = Math.abs(y2 - y1), sy = y1 < y2 ? 1 : -1;
+		let err = (dx > dy ? dx : -dy) / 2;
+
+		while (true) {
+			tiles.push(new Position(x1, y1));
+			if (x1 === x2 && y1 === y2) break;
+
+			if (err > -dx) { err -= dy; x1 += sx; }
+			if (err < dy) { err += dx; y1 += sy; }
+		}
+
+		return tiles;
+	}
+
+	private _isTileBonus(tile: Tile): boolean {
+		return tile.color >= ColorsCount;
+	}
+
+	private _activateBonus(bonus: Tile): void {
+		if (!this._isTileBonus(bonus) || bonus.isActivated) return;
+
+		const { x, y } = this.positionFromIndex(bonus.index) as Position;
+		bonus.isActivated = true;
+
+		switch (bonus.color) {
+			case Color.Bomb:
+				this._explodeAt(x, y, this._boosterRadius);
+				this.turns--;
+				break;
+			case Color.SuperHorizontal:
+				this._destroyRow(y);
+				this.turns--;
+				break;
+			case Color.SuperVertical:
+				this._destroyColumn(x);
+				this.turns--;
+				break;
+			case Color.SuperAll:
+				this._destroyAll()
+				this.turns--;
+				break;
+		}
 	}
 }
