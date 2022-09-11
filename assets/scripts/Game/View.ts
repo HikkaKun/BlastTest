@@ -80,6 +80,9 @@ export default class View extends cc.Component {
 
 	public tiles = new Map<string, TileView>;
 
+	public isSwapActive = false;
+	public swapTile: TileView | null = null;
+
 	protected onLoad() {
 		for (const blockConfig of this.blockConfigs) {
 			this.blocks.set(blockConfig.color as Color, blockConfig.spriteFrame);
@@ -94,12 +97,13 @@ export default class View extends cc.Component {
 			colors: this.colors,
 			shuffles: this.shuffles,
 			boosterRadius: this.boosterRadius,
-			minSuperTileGroupSize: this.minSuperTileGroupSize
+			minSuperTileGroupSize: this.minSuperTileGroupSize,
+			swaps: this.swapBonuses,
 		};
 		const callbacks: BlastGameCallbacks = {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
 			OnGenerateTile: (forPosition, fromOutside) => this.OnGenerateTile(forPosition, fromOutside),
-			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition),
+			OnMoveTile: (oldPosition, newPosition, isSwap) => this.OnMoveTile(oldPosition, newPosition, isSwap),
 			OnTurn: (turns: number) => this.OnTurn(turns),
 			OnLose: () => cc.log("Lose!"),
 			OnWin: () => cc.log("Win!"),
@@ -152,15 +156,39 @@ export default class View extends cc.Component {
 
 		if (!isOn) return;
 
-		const children = this.node.children;
+		this._moveChildToTop(this.black.node);
+	}
 
-		const index = children.indexOf(this.black.node);
-		const lastIndex = children.length - 1;
-
-		[children[index], children[lastIndex]] = [children[lastIndex], children[index]];
+	private _moveChildToTop(child: cc.Node) {
+		this.node.removeChild(child, false);
+		this.node.addChild(child);
 	}
 
 	private OnTileTap(tile: TileView): void {
+		if (this.isSwapActive) {
+			switch (this.swapTile) {
+				case tile:
+					this.isSwapActive = false;
+					this._toggleBlack(false);
+					this.swapTile = null;
+					break;
+				case null:
+					this.swapTile = tile;
+					this._moveChildToTop(tile.node);
+					break;
+				default:
+					this.isSwapActive = false;
+					this._moveChildToTop(tile.node);
+					this._toggleBlack(false);
+
+					this.game.swap(this.swapTile.x, this.swapTile.y, tile.x, tile.y);
+					this.swapTile = null;
+					break;
+			}
+
+			return;
+		}
+
 		this.game.tapAt(tile.x, tile.y);
 	}
 
@@ -169,6 +197,8 @@ export default class View extends cc.Component {
 		tile.tweenDestroy();
 
 		this.tiles.delete(position.toString());
+
+		cc.log("destoyed", tile.id);
 	}
 
 	private OnGenerateTile(forPosition: Position, fromOutside: boolean) {
@@ -199,16 +229,29 @@ export default class View extends cc.Component {
 		this.tiles.set(tile.id, tile);
 	}
 
-	private OnMoveTile(oldPosition: Position, newPosition: Position) {
-		const tile = this.tiles.get(oldPosition.toString()) as TileView;
+	private OnMoveTile(oldPosition: Position, newPosition: Position, isSwap = false) {
+		const oldIndex = oldPosition.toString();
+		const newIndex = newPosition.toString();
+		const tile = this.tiles.get(oldIndex) as TileView;
 
-		tile.id = newPosition.toString();
+		if (isSwap) {
+			const swapTile = this.tiles.get(newIndex) as TileView;
+
+			swapTile.id = oldIndex;
+			swapTile.x = oldPosition.x;
+			swapTile.y = oldPosition.y;
+
+			this.tiles.set(oldIndex, swapTile);
+			swapTile.tweenMove();
+		} else {
+			this.tiles.delete(oldIndex);
+		}
+
+		tile.id = newIndex;
 		tile.x = newPosition.x;
 		tile.y = newPosition.y;
 
-		this.tiles.delete(oldPosition.toString());
-		this.tiles.set(newPosition.toString(), tile);
-
+		this.tiles.set(newIndex, tile);
 		tile.tweenMove();
 	}
 
@@ -244,6 +287,22 @@ export default class View extends cc.Component {
 	}
 
 	private OnTapBonus(type: ViewBonusTypeEnum) {
-		cc.log("tapped", BonusType[type]);
+		if (this.isSwapActive) {
+			this.isSwapActive = false;
+			this.swapTile = null;
+			this._toggleBlack(false);
+
+			return;
+		}
+
+		switch (type) {
+			case ViewBonusType.Swap:
+				if (this.game.swaps <= 0) break;
+
+				this.isSwapActive = true;
+				this._toggleBlack(true);
+				break;
+		}
+
 	}
 }

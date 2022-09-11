@@ -19,7 +19,7 @@ export interface BlastGameConfig {
 
 export interface BlastGameCallbacks {
 	OnDestroyTile: (position: Position) => void;
-	OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
+	OnMoveTile: (oldPosition: Position, newPosition: Position, isSwap: boolean) => void;
 	OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
 	OnTurn: (turns: number) => void;
 	OnLose: () => void;
@@ -109,7 +109,7 @@ export default class BlastGame {
 	private _swaps: number;
 
 	private OnDestroyTile: (position: Position) => void;
-	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
+	private OnMoveTile: (oldPosition: Position, newPosition: Position, isSwap: boolean) => void;
 	private OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
 	private OnTurn: (turns: number) => void;
 	private OnLose: () => void;
@@ -336,7 +336,7 @@ export default class BlastGame {
 			if (tiles.length > 0) {
 				const tile = tiles.shift() as Tile;
 				this._field[index] = tile;
-				this.OnMoveTile(this.positionFromIndex(tile.index) as Position, new Position(x, y));
+				this.OnMoveTile(this.positionFromIndex(tile.index) as Position, new Position(x, y), false);
 				tile.index = index;
 			} else {
 				this._field[index] = this._generateTile(index);
@@ -348,6 +348,9 @@ export default class BlastGame {
 	}
 
 	public swap(x1: number, y1: number, x2: number, y2: number): void {
+		cc.log(this.swaps)
+		if (this.swaps <= 0) return;
+
 		const index1 = this.indexFromPosition(x1, y1);
 		const index2 = this.indexFromPosition(x2, y2);
 
@@ -355,7 +358,8 @@ export default class BlastGame {
 
 		[this._field[index1], this._field[index2]] = [this._field[index2], this._field[index1]];
 
-		this.OnMoveTile(this.positionFromIndex(index1) as Position, this.positionFromIndex(index2) as Position);
+		this.OnMoveTile(this.positionFromIndex(index1) as Position, this.positionFromIndex(index2) as Position, true);
+		this.swaps--;
 	}
 
 	private _shuffle(): void {
