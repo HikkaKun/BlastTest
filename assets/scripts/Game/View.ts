@@ -46,6 +46,9 @@ export default class View extends cc.Component {
 	@property({ min: 0, step: 1, max: 99 })
 	public swapBonuses = 5;
 
+	@property({ min: 0, max: 1 })
+	public bombChance = 0.01;
+
 	//#endregion
 
 	//#region view settings
@@ -99,6 +102,7 @@ export default class View extends cc.Component {
 			boosterRadius: this.boosterRadius,
 			minSuperTileGroupSize: this.minSuperTileGroupSize,
 			swaps: this.swapBonuses,
+			bombChance: this.bombChance,
 		};
 		const callbacks: BlastGameCallbacks = {
 			OnDestroyTile: (position) => this.OnDestroyTile(position),
@@ -165,8 +169,6 @@ export default class View extends cc.Component {
 	}
 
 	private OnTileTap(tile: TileView): void {
-		cc.log(tile.id);
-
 		if (this.isSwapActive) {
 			switch (this.swapTile) {
 				case tile:

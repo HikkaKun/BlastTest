@@ -110,6 +110,7 @@ export default class BlastGame {
 	private _canMakeTurns = true;
 	private _swaps: number;
 	private _bombChance: number;
+	private _boosterRadius: number;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -133,6 +134,7 @@ export default class BlastGame {
 		this._winScore = config.winScore;
 		this._swaps = config.swaps ?? 0;
 		this._bombChance = config.bombChance ?? 0.01;
+		this._boosterRadius = config.boosterRadius ?? 2;
 
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
@@ -187,6 +189,13 @@ export default class BlastGame {
 		if (!this.checkBounds(x, y)) return;
 		if (this.turns == 0) return;
 
+		switch (this.tileAt(x, y)?.color) {
+			case Color.Bomb:
+				this._explodeAt(x, y, this._boosterRadius);
+
+				return;
+		}
+
 		const tiles = this.findGroup(x, y);
 
 		if (tiles.length < this._minTileGroupSize) return;
@@ -212,12 +221,14 @@ export default class BlastGame {
 		this._lose();
 	}
 
-	public findGroup(x: number, y: number): Array<Position> {
+	public findGroup(x: number, y: number, checkFunc?: (tileA: Tile, tileB: Tile) => boolean): Array<Position> {
 		if (!this.checkBounds(x, y)) return [];
+		if (!checkFunc) {
+			checkFunc = (tileA, tileB) => tileA.color == tileB.color;
+		}
 
 		const tiles = new Array<Position>;
 
-		const pickedColor = this.tileAt(x, y)?.color as Color;
 		const start = new Position(x, y);
 
 		const frontier = new Array<Position>;
@@ -230,7 +241,7 @@ export default class BlastGame {
 			const current = frontier.shift() as Position;
 			const neighbors = this._getNeighbors(current.x, current.y)
 			for (const next of neighbors) {
-				if (this.tileAt(next.x, next.y)?.color != pickedColor) continue;
+				if (!checkFunc(this.tileAt(current.x, current.y) as Tile, this.tileAt(next.x, next.y) as Tile)) continue;
 				if (visited.has(next.toString())) continue;
 
 				frontier.push(next);
@@ -300,16 +311,34 @@ export default class BlastGame {
 	private _destroyTiles(tiles: Array<Position>): void {
 		const columnsToUpdate = new Set<number>;
 
+		const bombs = Array<Position>();
+
 		for (let i = 0; i < tiles.length; i++) {
 			const tile = tiles[i];
 			const { x, y } = tile;
 			const index = this.indexFromPosition(x, y) as number;
 
-			this._field[index] = null;
+			if (this._field[index]?.color == Color.Bomb) {
+				bombs.push(new Position(x, y));
+			}
+		}
 
-			this.OnDestroyTile(tile);
+		for (let i = 0; i < tiles.length; i++) {
+			const tile = tiles[i];
+			const { x, y } = tile;
+			const index = this.indexFromPosition(x, y) as number;
+
+			if (this._field[index] != null) {
+				this._field[index] = null;
+
+				this.OnDestroyTile(tile);
+			}
 
 			columnsToUpdate.add(x);
+		}
+
+		for (const bomb of bombs) {
+			this._explodeAt(bomb.x, bomb.y, this._boosterRadius);
 		}
 
 		columnsToUpdate.forEach((x) => {
@@ -416,5 +445,14 @@ export default class BlastGame {
 
 		this._canMakeTurns = false;
 		this.OnWin();
+	}
+
+	private _explodeAt(x: number, y: number, radius: number): void {
+		const tiles = this.findGroup(x, y, (tileA, tileB) => {
+			const pos = this.positionFromIndex(tileB.index) as Position;
+			return (pos.x - x) * (pos.x - x) + (pos.y - y) * (pos.y - y) <= radius * radius
+		});
+
+		this._destroyTiles(tiles);
 	}
 }
