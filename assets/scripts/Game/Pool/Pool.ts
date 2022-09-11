@@ -20,7 +20,7 @@ export default class Pool extends cc.Component {
 		}
 	}
 
-	_createNewObject(): cc.Node | null {
+	private _createNewObject(): cc.Node | null {
 		if (this.prefab == null) return null;
 
 		const node = cc.instantiate(this.prefab);
@@ -33,11 +33,11 @@ export default class Pool extends cc.Component {
 		return node;
 	}
 
-	pop(): cc.Node | null {
+	public pop(): cc.Node | null {
 		return this._objects.pop() ?? this._createNewObject();
 	}
 
-	push(node: cc.Node): void {
+	public push(node: cc.Node): void {
 		this._objects.push(node);
 	}
 }

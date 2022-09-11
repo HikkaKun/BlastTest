@@ -1,13 +1,13 @@
+import BlastGame, { BlastGameConfig, BlastGameCallbacks, Position } from '../../Model/BlastGame';
+import BonusType from '../../Model/BonusType';
+import { Color } from '../../Model/Color';
+import { GameEvent } from '../GameEvent';
+import GameObjectManager from '../GameObject/GameObjectManager';
+import { GameObjectType, GameOjbectTypeEnum } from '../GameObject/GameObjectType';
+import { ViewBonusTypeEnum, ViewBonusType } from '../Ui/Bonus/ViewBonusType';
+import Toggle from '../Ui/Toggle';
 import BlockConfig from './BlockConfig';
-import BlastGame, { BlastGameConfig, BlastGameCallbacks, Position } from '../Model/BlastGame';
-import { Color } from '../Model/Color';
 import TileView from './TileView';
-import GameEvent from './GameEvent';
-import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
-import GameObjectManager from './GameObject/GameObjectManager';
-import BonusType from '../Model/BonusType';
-import { ViewBonusType, ViewBonusTypeEnum } from './Ui/Bonus/ViewBonusType';
-import Toggle from './Ui/Toggle';
 
 const { ccclass, property } = cc._decorator;
 
@@ -52,9 +52,6 @@ export default class View extends cc.Component {
 	//#endregion
 
 	//#region view settings
-
-	@property(cc.Prefab)
-	public tileViewPrefab: cc.Prefab | null = null;
 
 	@property({ type: GameObjectType })
 	public tilePrefab: GameOjbectTypeEnum = GameObjectType.None;
@@ -146,14 +143,14 @@ export default class View extends cc.Component {
 		this._handleEvents(false);
 	}
 
-	private _handleEvents(isOn: boolean) {
+	protected _handleEvents(isOn: boolean) {
 		const func = isOn ? 'on' : 'off';
 
 		cc.systemEvent[func](GameEvent.TileTap, this.OnTileTap, this);
 		cc.systemEvent[func](GameEvent.Bonus, this.OnTapBonus, this);
 	}
 
-	private _toggleBlack(isOn: boolean, instant = false): void {
+	protected _toggleBlack(isOn: boolean, instant = false): void {
 		if (!this.black) return;
 
 		this.black.OnToggle(isOn, instant ? 0 : 0.5);
@@ -163,12 +160,12 @@ export default class View extends cc.Component {
 		this._moveChildToTop(this.black.node);
 	}
 
-	private _moveChildToTop(child: cc.Node) {
+	protected _moveChildToTop(child: cc.Node) {
 		this.node.removeChild(child, false);
 		this.node.addChild(child);
 	}
 
-	private OnTileTap(tile: TileView): void {
+	protected OnTileTap(tile: TileView): void {
 		if (this.isSwapActive) {
 			switch (this.swapTile) {
 				case tile:
@@ -196,7 +193,7 @@ export default class View extends cc.Component {
 		this.game.tapAt(tile.x, tile.y);
 	}
 
-	private OnDestroyTile(position: Position) {
+	protected OnDestroyTile(position: Position) {
 		const index = position.toString();
 		const tile = this.tiles.get(index);
 
@@ -207,7 +204,7 @@ export default class View extends cc.Component {
 		this.tiles.delete(index);
 	}
 
-	private OnGenerateTile(forPosition: Position, fromOutside: boolean) {
+	protected OnGenerateTile(forPosition: Position, fromOutside: boolean) {
 		const node = GameObjectManager.createGameOjbect(this.tilePrefab);
 
 		if (!node) return;
@@ -221,7 +218,7 @@ export default class View extends cc.Component {
 		tile.y = forPosition.y;
 
 		const sprite = node.getComponent(cc.Sprite);
-		sprite.spriteFrame = this.blocks.get(this.game.tileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
+		sprite.spriteFrame = this.blocks.get(this.game.getTileAt(forPosition.x, forPosition.y)?.color as Color) as cc.SpriteFrame;
 
 		node.x = (forPosition.x - this.gameWidth / 2 + 0.5) * this.blockSize;
 		node.y = ((fromOutside ? forPosition.y - this.game.height : forPosition.y) - this.gameHeight / 2 + 0.5) * -this.blockSize;
@@ -235,7 +232,7 @@ export default class View extends cc.Component {
 		this.tiles.set(tile.id, tile);
 	}
 
-	private OnMoveTile(oldPosition: Position, newPosition: Position) {
+	protected OnMoveTile(oldPosition: Position, newPosition: Position) {
 		const oldIndex = oldPosition.toString();
 		const newIndex = newPosition.toString();
 
@@ -266,7 +263,7 @@ export default class View extends cc.Component {
 		}
 	}
 
-	private OnShuffle(oldPositions: Array<Position>, newPositions: Array<Position>) {
+	protected OnShuffle(oldPositions: Array<Position>, newPositions: Array<Position>) {
 		const newTiles = new Map<string, TileView>();
 
 		for (let i = 0; i < oldPositions.length; i++) {
@@ -285,19 +282,19 @@ export default class View extends cc.Component {
 		this.tiles = newTiles;
 	}
 
-	private OnChangeScore(score: number) {
+	protected OnChangeScore(score: number) {
 		cc.systemEvent.emit(GameEvent.UpdateScore, score, this.winScore);
 	}
 
-	private OnTurn(turns: number) {
+	protected OnTurn(turns: number) {
 		cc.systemEvent.emit(GameEvent.UpdateTurns, turns, this.turns);
 	}
 
-	private OnUpdateBonusInfo(type: BonusType, count: number) {
+	protected OnUpdateBonusInfo(type: BonusType, count: number) {
 		cc.systemEvent.emit(GameEvent.UpdateBonusInfo, type, count);
 	}
 
-	private OnTapBonus(type: ViewBonusTypeEnum) {
+	protected OnTapBonus(type: ViewBonusTypeEnum) {
 		if (this.isSwapActive) {
 			this.isSwapActive = false;
 			this.swapTile = null;
@@ -317,7 +314,7 @@ export default class View extends cc.Component {
 
 	}
 
-	private OnEndGame(isWin: boolean) {
+	protected OnEndGame(isWin: boolean) {
 		cc.systemEvent.emit(GameEvent.ToggleFinalScreen, true);
 		cc.systemEvent.emit(GameEvent.FinalScreenData, this.game.score, this.winScore, isWin);
 	}

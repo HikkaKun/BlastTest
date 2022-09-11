@@ -1,4 +1,4 @@
-import GameEvent from '../GameEvent';
+import { GameEvent } from '../GameEvent';
 import PoolManager from '../Pool/PoolManager';
 import GameObject from './GameObject';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObjectType';
@@ -8,7 +8,7 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class GameObjectManager extends cc.Component {
 	@property(PoolManager)
-	protected poolManager: PoolManager | null = null;
+	public poolManager: PoolManager | null = null;
 
 	@property({ type: GameObjectType, serializable: false })
 	protected _type: GameOjbectTypeEnum = GameObjectType.None;

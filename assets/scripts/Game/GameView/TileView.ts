@@ -1,4 +1,4 @@
-import GameObject from './GameObject/GameObject';
+import GameObject from '../GameObject/GameObject';
 import View from './View';
 
 const { ccclass, property } = cc._decorator;

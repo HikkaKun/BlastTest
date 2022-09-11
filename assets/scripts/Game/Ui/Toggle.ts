@@ -1,4 +1,4 @@
-import GameEvent, { GameEventEnum } from '../GameEvent';
+import { GameEvent, GameEventEnum } from '../GameEvent';
 
 const { ccclass, property } = cc._decorator;
 

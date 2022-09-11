@@ -9,7 +9,7 @@ export default class ProgressBar extends cc.Component {
 	protected stateOnStart = 0;
 
 	@property({ min: 0, max: 1 })
-	private _progress = 1;
+	protected _progress = 1;
 
 	@property({ min: 0, max: 1 })
 	public get progress() {

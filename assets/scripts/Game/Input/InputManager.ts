@@ -1,4 +1,4 @@
-import GameEvent from '../GameEvent';
+import { GameEvent } from '../GameEvent';
 import BonusInputCommand from './Commands/BonusInpuCommand';
 import IInputCommand from './Commands/IInputCommand';
 import RestartInputCommand from './Commands/RestartInputCommand';
@@ -11,7 +11,7 @@ const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class InputManager extends cc.Component {
-	private _inputCommands = new Map<InputDirectionEnum, IInputCommand>;
+	protected _inputCommands = new Map<InputDirectionEnum, IInputCommand>;
 
 	protected onLoad(): void {
 		this._handleEvents(true);
@@ -20,13 +20,13 @@ export default class InputManager extends cc.Component {
 		this._inputCommands.set(InputDirection.Restart, new RestartInputCommand());
 	}
 
-	private _handleEvents(isOn: boolean) {
+	protected _handleEvents(isOn: boolean) {
 		const func = isOn ? 'on' : 'off';
 
 		cc.systemEvent[func](GameEvent.Input, this.OnInput, this);
 	}
 
-	OnInput(type: InputTypeEnum, touch: cc.Touch, direction: InputDirectionEnum, inputCatcher: InputCatcher) {
+	protected OnInput(type: InputTypeEnum, touch: cc.Touch, direction: InputDirectionEnum, inputCatcher: InputCatcher) {
 		switch (type) {
 			case InputType.Down:
 				this._inputCommands.get(direction)?.onDown(touch, inputCatcher)

@@ -6,7 +6,7 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class BonusView extends ScoreView {
 	@property({ type: ViewBonusType })
-	type: ViewBonusTypeEnum = ViewBonusType.Swap;
+	public type: ViewBonusTypeEnum = ViewBonusType.Swap;
 
 	protected onUpdateScore(type: ViewBonusTypeEnum, value: number): void {
 		if (this.label) {

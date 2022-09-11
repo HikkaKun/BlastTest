@@ -1,5 +1,6 @@
-import { Color } from '../Model/Color'
-import { EnumType } from '../Utilities';
+import { Color } from '../../Model/Color';
+import { EnumType } from '../../Utilities';
+
 
 export const ViewColor = cc.Enum({
 	Blue: Color.Blue,

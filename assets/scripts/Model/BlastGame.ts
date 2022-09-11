@@ -35,7 +35,7 @@ export class Position {
 	public readonly x: number;
 	public readonly y: number;
 
-	private readonly _toStringResult: string;
+	protected readonly _toStringResult: string;
 
 	constructor(x: number, y: number) {
 		this.x = x;
@@ -67,7 +67,7 @@ export default class BlastGame {
 		return this._turns;
 	}
 
-	private set turns(value) {
+	protected set turns(value) {
 		this._turns = value;
 		this.OnTurn(this._turns);
 
@@ -76,11 +76,15 @@ export default class BlastGame {
 		}
 	}
 
+	public get winScore() {
+		return this._winScore;
+	}
+
 	public get score() {
 		return this._score;
 	}
 
-	private set score(value) {
+	protected set score(value) {
 		this._score = value;
 		this.OnChangeScore(this._score);
 
@@ -98,30 +102,30 @@ export default class BlastGame {
 		this.OnUpdateBonusInfo(BonusType.Swap, value);
 	}
 
-	private _width;
-	private _height;
-	private _field: Array<Tile | null>;
-	private _minTileGroupSize: number;
-	private _colors: number;
-	private _shuffles: number;
-	private _turns: number;
-	private _winScore: number;
-	private _score = 0;
-	private _canMakeTurns = true;
-	private _swaps: number;
-	private _bombChance: number;
-	private _boosterRadius: number;
-	private _minSuperTileGroupSize: number;
+	protected _width;
+	protected _height;
+	protected _field: Array<Tile | null>;
+	protected _minTileGroupSize: number;
+	protected _colors: number;
+	protected _shuffles: number;
+	protected _turns: number;
+	protected _winScore: number;
+	protected _score = 0;
+	protected _canMakeTurns = true;
+	protected _swaps: number;
+	protected _bombChance: number;
+	protected _boosterRadius: number;
+	protected _minSuperTileGroupSize: number;
 
-	private OnDestroyTile: (position: Position) => void;
-	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
-	private OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
-	private OnTurn: (turns: number) => void;
-	private OnLose: () => void;
-	private OnWin: () => void;
-	private OnChangeScore: (score: number) => void;
-	private OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
-	private OnUpdateBonusInfo: (type: BonusType, count: number) => void;
+	protected OnDestroyTile: (position: Position) => void;
+	protected OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
+	protected OnGenerateTile: (forPosition: Position, fromOutside: boolean) => void;
+	protected OnTurn: (turns: number) => void;
+	protected OnLose: () => void;
+	protected OnWin: () => void;
+	protected OnChangeScore: (score: number) => void;
+	protected OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => void;
+	protected OnUpdateBonusInfo: (type: BonusType, count: number) => void;
 
 	constructor(config: BlastGameConfig, callbacks: BlastGameCallbacks) {
 		this._field = new Array<Tile>();
@@ -177,7 +181,7 @@ export default class BlastGame {
 		}
 	}
 
-	public tileAt(x: number, y: number): Tile | null {
+	public getTileAt(x: number, y: number): Tile | null {
 		const index = this.indexFromPosition(x, y);
 		return index == null ? null : this._field[index];
 	}
@@ -191,7 +195,7 @@ export default class BlastGame {
 		if (!this.checkBounds(x, y)) return;
 		if (this.turns == 0) return;
 
-		const tile = this.tileAt(x, y) as Tile;
+		const tile = this.getTileAt(x, y) as Tile;
 
 		if (this._isTileBonus(tile)) {
 			this._activateBonus(tile);
@@ -202,15 +206,15 @@ export default class BlastGame {
 			return;
 		}
 
-		const tiles = this.findGroup(x, y);
+		const tilePositions = this.findGroup(x, y);
 
-		if (tiles.length < this._minTileGroupSize) return;
+		if (tilePositions.length < this._minTileGroupSize) return;
 
-		if (tiles.length >= this._minSuperTileGroupSize) {
+		if (tilePositions.length >= this._minSuperTileGroupSize) {
 			const position = new Position(x, y);
 			const posIndex = position.toString();
 
-			tiles.splice(tiles.indexOf(tiles.filter(tile => tile.toString() == posIndex)[0]), 1);
+			tilePositions.splice(tilePositions.indexOf(tilePositions.filter(tile => tile.toString() == posIndex)[0]), 1);
 
 			this.OnDestroyTile(position);
 
@@ -221,7 +225,7 @@ export default class BlastGame {
 			this.OnGenerateTile(position, false);
 		}
 
-		this._destroyTiles(tiles);
+		this._destroyTilesAt(tilePositions);
 
 		for (let i = 0; i < this.width; i++) {
 			this._updateColumn(i);
@@ -256,7 +260,7 @@ export default class BlastGame {
 			checkFunc = (tileA, tileB) => tileA.color == tileB.color;
 		}
 
-		const tiles = new Array<Position>;
+		const tilePositions = new Array<Position>;
 
 		const start = new Position(x, y);
 
@@ -264,14 +268,14 @@ export default class BlastGame {
 		frontier.push(start)
 		const visited = new Set<string>;
 		visited.add(start.toString());
-		tiles.push(start);
+		tilePositions.push(start);
 
 		while (frontier.length) {
 			const current = frontier.shift() as Position;
 			const neighbors = this._getNeighbors(current.x, current.y)
 			for (const next of neighbors) {
-				const tileA = this.tileAt(current.x, current.y);
-				const tileB = this.tileAt(next.x, next.y);
+				const tileA = this.getTileAt(current.x, current.y);
+				const tileB = this.getTileAt(next.x, next.y);
 
 				if (!tileA || !tileB) continue;
 				if (!checkFunc(tileA, tileB)) continue;
@@ -279,14 +283,14 @@ export default class BlastGame {
 
 				frontier.push(next);
 				visited.add(next.toString());
-				tiles.push(next);
+				tilePositions.push(next);
 			}
 		}
 
-		return tiles;
+		return tilePositions;
 	}
 
-	private _findNumberOfGroups(): number {
+	protected _findNumberOfGroups(): number {
 		const checked = new Set<string>();
 		let groupsCount = 0;
 
@@ -315,7 +319,7 @@ export default class BlastGame {
 		return groupsCount;
 	}
 
-	private _getNeighbors(x: number, y: number): Array<Position> {
+	protected _getNeighbors(x: number, y: number): Array<Position> {
 		const neighbors = new Array<Position>;
 
 		const indexX = [0, 1, 0, -1];
@@ -325,7 +329,7 @@ export default class BlastGame {
 			const neighborX = x + indexX[i];
 			const neighborY = y + indexY[i];
 
-			if (!this.tileAt(neighborX, neighborY)) continue;
+			if (!this.getTileAt(neighborX, neighborY)) continue;
 
 			const position = new Position(neighborX, neighborY);
 			neighbors.push(position);
@@ -334,22 +338,22 @@ export default class BlastGame {
 		return neighbors;
 	}
 
-	private _generateTile(index: number): Tile {
+	protected _generateTile(index: number): Tile {
 		return new Tile({
 			index: index,
 			color: Math.random() <= this._bombChance ? Color.Bomb : randomEnumKey(Color, Math.min(this._colors, ColorsCount)),
 		});
 	}
 
-	private _destroyTiles(tiles: Array<Position>): void {
-		this.score += this._pointsForTiles(tiles);
+	protected _destroyTilesAt(tilePositions: Array<Position>): void {
+		this.score += this._pointsForTiles(tilePositions);
 
-		for (let i = 0; i < tiles.length; i++) {
-			const position = tiles[i];
+		for (let i = 0; i < tilePositions.length; i++) {
+			const position = tilePositions[i];
 			const { x, y } = position;
 			const index = this.indexFromPosition(x, y) as number;
 
-			const tile = this.tileAt(x, y);
+			const tile = this.getTileAt(x, y);
 			if (tile != null) {
 				if (this._isTileBonus(tile)) {
 					this._activateBonus(tile);
@@ -362,10 +366,10 @@ export default class BlastGame {
 		}
 	}
 
-	private _updateColumn(x: number): void {
+	protected _updateColumn(x: number): void {
 		let bottomEmptyY = this.height - 1;
 
-		while (this.tileAt(x, bottomEmptyY) != null) {
+		while (this.getTileAt(x, bottomEmptyY) != null) {
 			bottomEmptyY--;
 		}
 
@@ -376,7 +380,7 @@ export default class BlastGame {
 		let y: number;
 
 		for (y = bottomEmptyY - 1; y >= 0; y--) {
-			const tile = this.tileAt(x, y)
+			const tile = this.getTileAt(x, y)
 			if (tile != null) {
 				tiles.push(tile);
 				const index = this.indexFromPosition(x, y) as number;
@@ -422,7 +426,7 @@ export default class BlastGame {
 		this.swaps--;
 	}
 
-	private _shuffle(): void {
+	protected _shuffle(): void {
 		const oldPositions = Array<Position>();
 		const newPositions = Array<Position>();
 
@@ -439,40 +443,40 @@ export default class BlastGame {
 		this.OnShuffle(oldPositions, newPositions);
 	}
 
-	private _pointsForTiles(positions: Array<Position>): number {
+	protected _pointsForTiles(tilePositions: Array<Position>): number {
 		let points = 0;
 
-		for (const pos of positions) {
-			points += this.tileAt(pos.x, pos.y)?.points ?? 0;
+		for (const position of tilePositions) {
+			points += this.getTileAt(position.x, position.y)?.points ?? 0;
 		}
 
 		return points;
 	}
 
-	private _lose(): void {
+	protected _lose(): void {
 		if (!this._canMakeTurns) return;
 
 		this._canMakeTurns = false;
 		this.OnLose();
 	}
 
-	private _win(): void {
+	protected _win(): void {
 		if (!this._canMakeTurns) return;
 
 		this._canMakeTurns = false;
 		this.OnWin();
 	}
 
-	private _explodeAt(x: number, y: number, radius: number): void {
-		const tiles = this.findGroup(x, y, (tileA, tileB) => {
+	protected _explodeAt(x: number, y: number, radius: number): void {
+		const tilePositions = this.findGroup(x, y, (tileA, tileB) => {
 			const pos = this.positionFromIndex(tileB.index) as Position;
 			return (pos.x - x) * (pos.x - x) + (pos.y - y) * (pos.y - y) <= radius * radius
 		});
 
-		this._destroyTiles(tiles);
+		this._destroyTilesAt(tilePositions);
 	}
 
-	private _generateSuperTile(index: number): Tile {
+	protected _generateSuperTile(index: number): Tile {
 		const types = [Color.Bomb, Color.SuperVertical, Color.SuperHorizontal, Color.SuperAll];
 
 		return new Tile({
@@ -481,49 +485,49 @@ export default class BlastGame {
 		});
 	}
 
-	private _destroyRow(y: number): void {
-		this._destroyTiles(this._getTileLine(0, y, this.width - 1, y));
+	protected _destroyRow(y: number): void {
+		this._destroyTilesAt(this._getTileLine(0, y, this.width - 1, y));
 	}
 
-	private _destroyColumn(x: number): void {
-		this._destroyTiles(this._getTileLine(x, 0, x, this._height - 1));
+	protected _destroyColumn(x: number): void {
+		this._destroyTilesAt(this._getTileLine(x, 0, x, this._height - 1));
 	}
 
-	private _destroyAll(): void {
-		const tiles = Array<Position>();
+	protected _destroyAll(): void {
+		const tilePositions = Array<Position>();
 		for (let i = 0; i < this._field.length; i++) {
-			tiles.push(this.positionFromIndex(i) as Position);
+			tilePositions.push(this.positionFromIndex(i) as Position);
 		}
 
-		this._destroyTiles(tiles);
+		this._destroyTilesAt(tilePositions);
 	}
 
-	private _getTileLine(x1: number, y1: number, x2: number, y2: number): Array<Position> {
+	protected _getTileLine(x1: number, y1: number, x2: number, y2: number): Array<Position> {
 		if (!this.checkBounds(x1, y1)) return [];
 		if (!this.checkBounds(x2, y2)) return [];
 
-		const tiles = Array<Position>();
+		const tilePositions = Array<Position>();
 
 		const dx = Math.abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
 		const dy = Math.abs(y2 - y1), sy = y1 < y2 ? 1 : -1;
 		let err = (dx > dy ? dx : -dy) / 2;
 
 		while (true) {
-			tiles.push(new Position(x1, y1));
+			tilePositions.push(new Position(x1, y1));
 			if (x1 === x2 && y1 === y2) break;
 
 			if (err > -dx) { err -= dy; x1 += sx; }
 			if (err < dy) { err += dx; y1 += sy; }
 		}
 
-		return tiles;
+		return tilePositions;
 	}
 
-	private _isTileBonus(tile: Tile): boolean {
+	protected _isTileBonus(tile: Tile): boolean {
 		return tile.color >= ColorsCount;
 	}
 
-	private _activateBonus(bonus: Tile): void {
+	protected _activateBonus(bonus: Tile): void {
 		if (!this._isTileBonus(bonus) || bonus.isActivated) return;
 
 		const { x, y } = this.positionFromIndex(bonus.index) as Position;

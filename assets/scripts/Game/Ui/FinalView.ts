@@ -5,10 +5,10 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class FinalView extends ScoreView {
 	@property(cc.Node)
-	winLabel: cc.Node | null = null;
+	public winLabel: cc.Node | null = null;
 
 	@property(cc.Node)
-	loseLabel: cc.Node | null = null;
+	public loseLabel: cc.Node | null = null;
 
 	protected onUpdateScore(score: number, maxScore: number, isWin?: boolean): void {
 		if (this.winLabel && this.loseLabel) {
