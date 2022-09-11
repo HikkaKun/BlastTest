@@ -165,6 +165,8 @@ export default class View extends cc.Component {
 	}
 
 	private OnTileTap(tile: TileView): void {
+		cc.log(tile.id);
+
 		if (this.isSwapActive) {
 			switch (this.swapTile) {
 				case tile:
@@ -193,12 +195,11 @@ export default class View extends cc.Component {
 	}
 
 	private OnDestroyTile(position: Position) {
-		const tile = this.tiles.get(position.toString()) as TileView;
+		const index = position.toString();
+		const tile = this.tiles.get(index) as TileView;
 		tile.tweenDestroy();
 
-		this.tiles.delete(position.toString());
-
-		cc.log("destoyed", tile.id);
+		this.tiles.delete(index);
 	}
 
 	private OnGenerateTile(forPosition: Position, fromOutside: boolean) {
@@ -229,30 +230,35 @@ export default class View extends cc.Component {
 		this.tiles.set(tile.id, tile);
 	}
 
-	private OnMoveTile(oldPosition: Position, newPosition: Position, isSwap = false) {
+	private OnMoveTile(oldPosition: Position, newPosition: Position) {
 		const oldIndex = oldPosition.toString();
 		const newIndex = newPosition.toString();
-		const tile = this.tiles.get(oldIndex) as TileView;
 
-		if (isSwap) {
-			const swapTile = this.tiles.get(newIndex) as TileView;
+		const tile1 = this.tiles.get(oldIndex);
+		const tile2 = this.tiles.get(newIndex);
 
-			swapTile.id = oldIndex;
-			swapTile.x = oldPosition.x;
-			swapTile.y = oldPosition.y;
+		this.tiles.delete(oldIndex);
+		this.tiles.delete(newIndex);
 
-			this.tiles.set(oldIndex, swapTile);
-			swapTile.tweenMove();
-		} else {
-			this.tiles.delete(oldIndex);
+		if (tile1) {
+			this.tiles.set(newIndex, tile1);
+
+			tile1.id = newIndex;
+			tile1.x = newPosition.x;
+			tile1.y = newPosition.y;
+
+			tile1.tweenMove();
 		}
 
-		tile.id = newIndex;
-		tile.x = newPosition.x;
-		tile.y = newPosition.y;
+		if (tile2) {
+			this.tiles.set(oldIndex, tile2);
 
-		this.tiles.set(newIndex, tile);
-		tile.tweenMove();
+			tile2.id = oldIndex;
+			tile2.x = oldPosition.x;
+			tile2.y = oldPosition.y;
+
+			tile2.tweenMove();
+		}
 	}
 
 	private OnShuffle(oldPositions: Array<Position>, newPositions: Array<Position>) {
