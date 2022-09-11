@@ -6,6 +6,7 @@ import GameEvent from './GameEvent';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
 import GameObjectManager from './GameObject/GameObjectManager';
 import BonusType from '../Model/BonusType';
+import { ViewBonusType, ViewBonusTypeEnum } from './Ui/Bonus/ViewBonusType';
 
 const { ccclass, property } = cc._decorator;
 
@@ -135,6 +136,7 @@ export default class View extends cc.Component {
 		const func = isOn ? 'on' : 'off';
 
 		cc.systemEvent[func](GameEvent.TileTap, this.OnTileTap, this);
+		cc.systemEvent[func](GameEvent.Bonus, this.OnTapBonus, this);
 	}
 
 	private OnTileTap(tile: TileView): void {
@@ -218,5 +220,9 @@ export default class View extends cc.Component {
 
 	private OnUpdateBonusInfo(type: BonusType, count: number) {
 		cc.systemEvent.emit(GameEvent.UpdateBonusInfo, type, count);
+	}
+
+	private OnTapBonus(type: ViewBonusTypeEnum) {
+		cc.log("tapped", BonusType[type]);
 	}
 }

@@ -9,6 +9,8 @@ const GameEvent = cc.Enum({
 	UpdateScore: 11,
 	UpdateTurns: 12,
 	UpdateBonusInfo: 13,
+
+	Bonus: 20,
 });
 
 export default GameEvent;

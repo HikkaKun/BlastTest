@@ -1,4 +1,5 @@
 import GameEvent from '../GameEvent';
+import BonusInputCommand from './Commands/BonusInpuCommand';
 import IInputCommand from './Commands/IInputCommand';
 import TileInputCommand from './Commands/TileInputCommand';
 import InputCatcher from './InputCatcher';
@@ -14,6 +15,7 @@ export default class InputManager extends cc.Component {
 	protected onLoad(): void {
 		this._handleEvents(true);
 		this._inputCommands.set(InputDirection.Tile, new TileInputCommand());
+		this._inputCommands.set(InputDirection.Bonus, new BonusInputCommand());
 	}
 
 	private _handleEvents(isOn: boolean) {
