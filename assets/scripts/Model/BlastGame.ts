@@ -354,6 +354,8 @@ export default class BlastGame {
 		if (index1 == null || index2 == null || index1 == index2) return;
 
 		[this._field[index1], this._field[index2]] = [this._field[index2], this._field[index1]];
+
+		this.OnMoveTile(this.positionFromIndex(index1) as Position, this.positionFromIndex(index2) as Position);
 	}
 
 	private _shuffle(): void {
