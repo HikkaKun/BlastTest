@@ -205,10 +205,9 @@ export default class BlastGame {
 
 		this.turns--;
 
-		if (this.turns == 0) return;
-		if (this._findNumberOfGroups() != 0) return;
+		let groups = this._findNumberOfGroups();
 
-		let groups = 0;
+		if (groups != 0) return;
 
 		for (let i = 0; i < this._shuffles; i++) {
 			this._shuffle();
@@ -217,6 +216,12 @@ export default class BlastGame {
 
 			if (groups != 0) return;
 		}
+
+		for (const tile of this._field) {
+			if (tile && tile.color == Color.Bomb) return;
+		}
+
+		if (this.swaps > 0) return;
 
 		this._lose();
 	}
