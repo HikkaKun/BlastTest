@@ -7,6 +7,7 @@ import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType'
 import GameObjectManager from './GameObject/GameObjectManager';
 import BonusType from '../Model/BonusType';
 import { ViewBonusType, ViewBonusTypeEnum } from './Ui/Bonus/ViewBonusType';
+import Toggle from './Ui/Toggle';
 
 const { ccclass, property } = cc._decorator;
 
@@ -64,6 +65,9 @@ export default class View extends cc.Component {
 	@property(cc.Node)
 	public background: cc.Node | null = null;
 
+	@property(Toggle)
+	public black: Toggle | null = null;
+
 	@property([BlockConfig])
 	public blockConfigs: Array<BlockConfig> = [];
 
@@ -116,6 +120,8 @@ export default class View extends cc.Component {
 			this.background.width = this.blockSize * (this.gameWidth + 1) / this.background.scaleX;
 			this.background.height = this.blockSize * (this.gameHeight + 1) / this.background.scaleY;
 		}
+
+		this._toggleBlack(false, true);
 	}
 
 	protected start(): void {
@@ -137,6 +143,21 @@ export default class View extends cc.Component {
 
 		cc.systemEvent[func](GameEvent.TileTap, this.OnTileTap, this);
 		cc.systemEvent[func](GameEvent.Bonus, this.OnTapBonus, this);
+	}
+
+	private _toggleBlack(isOn: boolean, instant = false): void {
+		if (!this.black) return;
+
+		this.black.OnToggle(isOn, instant ? 0 : 0.5);
+
+		if (!isOn) return;
+
+		const children = this.node.children;
+
+		const index = children.indexOf(this.black.node);
+		const lastIndex = children.length - 1;
+
+		[children[index], children[lastIndex]] = [children[lastIndex], children[index]];
 	}
 
 	private OnTileTap(tile: TileView): void {
