@@ -25,7 +25,7 @@ export default class Toggle extends cc.Component {
 			this.node.active = this.onlyOpacity;
 			this.node.opacity = 0;
 
-			cc.systemEvent.on(this.event, this.OnToggle, this);
+			this.event != GameEvent.None && cc.systemEvent.on(this.event, this.OnToggle, this);
 		}
 	}
 
