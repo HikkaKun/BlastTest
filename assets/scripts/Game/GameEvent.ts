@@ -11,6 +11,9 @@ const GameEvent = cc.Enum({
 	UpdateBonusInfo: 13,
 
 	Bonus: 20,
+
+	ToggleFinalScreen: 24,
+	FinalScreenData: 25,
 });
 
 export default GameEvent;

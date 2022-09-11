@@ -109,8 +109,8 @@ export default class View extends cc.Component {
 			OnGenerateTile: (forPosition, fromOutside) => this.OnGenerateTile(forPosition, fromOutside),
 			OnMoveTile: (oldPosition, newPosition) => this.OnMoveTile(oldPosition, newPosition),
 			OnTurn: (turns: number) => this.OnTurn(turns),
-			OnLose: () => cc.log("Lose!"),
-			OnWin: () => cc.log("Win!"),
+			OnLose: () => this.OnEndGame(false),
+			OnWin: () => this.OnEndGame(true),
 			OnChangeScore: (score: number) => this.OnChangeScore(score),
 			OnShuffle: (oldPositions: Array<Position>, newPositions: Array<Position>) => this.OnShuffle(oldPositions, newPositions),
 			OnUpdateBonusInfo: (type: BonusType, count: number) => this.OnUpdateBonusInfo(type, count)
@@ -315,5 +315,10 @@ export default class View extends cc.Component {
 				break;
 		}
 
+	}
+
+	private OnEndGame(isWin: boolean) {
+		cc.systemEvent.emit(GameEvent.ToggleFinalScreen, true);
+		cc.systemEvent.emit(GameEvent.FinalScreenData, this.game.score, this.winScore, isWin);
 	}
 }
