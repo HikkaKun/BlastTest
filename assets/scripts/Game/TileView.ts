@@ -4,7 +4,7 @@ import View from './View';
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class TileView extends cc.Component {
+export default class TileView extends GameObject {
 	public id: string = "";
 	public x: number = -1;
 	public y: number = -1;
@@ -26,7 +26,7 @@ export default class TileView extends cc.Component {
 
 		this.tween = cc.tween(this.node)
 			.to(0.25, { scale: 0 })
-			.call(() => { this.node.getComponent(GameObject).kill() })
+			.call(() => { this.kill() })
 			.start();
 	}
 }
