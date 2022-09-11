@@ -1,5 +1,5 @@
 import { randomEnumKey } from '../Utilities';
-import Color from './Color'
+import { Color, ColorsCount } from './Color'
 
 export interface TileConfig {
 	color?: Color;
@@ -13,7 +13,7 @@ export default class Tile {
 	public points: number;
 
 	constructor(config: TileConfig) {
-		this.color = config?.color ?? randomEnumKey(Color);
+		this.color = config?.color ?? randomEnumKey(Color, ColorsCount);
 		this.points = config?.points || 10;
 		this.index = config.index;
 	}

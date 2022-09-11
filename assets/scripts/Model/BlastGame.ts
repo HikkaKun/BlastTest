@@ -1,6 +1,6 @@
 import { randomEnumKey, shuffleArray } from '../Utilities';
 import BonusType from './BonusType';
-import Color from './Color';
+import { Color, ColorsCount } from './Color';
 import Tile from './Tile';
 
 export interface BlastGameConfig {
@@ -15,6 +15,8 @@ export interface BlastGameConfig {
 
 	boosterRadius?: number;
 	minSuperTileGroupSize?: number;
+
+	bombChance?: number;
 }
 
 export interface BlastGameCallbacks {
@@ -107,6 +109,7 @@ export default class BlastGame {
 	private _score = 0;
 	private _canMakeTurns = true;
 	private _swaps: number;
+	private _bombChance: number;
 
 	private OnDestroyTile: (position: Position) => void;
 	private OnMoveTile: (oldPosition: Position, newPosition: Position) => void;
@@ -129,6 +132,7 @@ export default class BlastGame {
 		this._turns = config.turnsNumber;
 		this._winScore = config.winScore;
 		this._swaps = config.swaps ?? 0;
+		this._bombChance = config.bombChance ?? 0.01;
 
 		this.OnDestroyTile = callbacks.OnDestroyTile;
 		this.OnMoveTile = callbacks.OnMoveTile;
@@ -195,11 +199,17 @@ export default class BlastGame {
 		if (this.turns == 0) return;
 		if (this._findNumberOfGroups() != 0) return;
 
+		let groups = 0;
+
 		for (let i = 0; i < this._shuffles; i++) {
 			this._shuffle();
+
+			groups = this._findNumberOfGroups();
+
+			if (groups != 0) return;
 		}
 
-		if (this._findNumberOfGroups() == 0) this._lose();
+		this._lose();
 	}
 
 	public findGroup(x: number, y: number): Array<Position> {
@@ -283,7 +293,7 @@ export default class BlastGame {
 	private _generateTile(index: number): Tile {
 		return new Tile({
 			index: index,
-			color: randomEnumKey(Color, this._colors)
+			color: Math.random() <= this._bombChance ? Color.Bomb : randomEnumKey(Color, Math.min(this._colors, ColorsCount)),
 		});
 	}
 

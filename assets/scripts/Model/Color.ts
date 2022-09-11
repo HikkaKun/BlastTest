@@ -1,9 +1,11 @@
-enum Color {
+export enum Color {
 	Blue,
 	Purple,
 	Red,
 	Yellow,
-	Green
+	Green,
+
+	Bomb,
 }
 
-export default Color;
+export const ColorsCount = 5;

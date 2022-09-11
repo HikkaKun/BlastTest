@@ -1,6 +1,6 @@
 import BlockConfig from './BlockConfig';
 import BlastGame, { BlastGameConfig, BlastGameCallbacks, Position } from '../Model/BlastGame';
-import Color from '../Model/Color';
+import { Color } from '../Model/Color';
 import TileView from './TileView';
 import GameEvent from './GameEvent';
 import { GameObjectType, GameOjbectTypeEnum } from './GameObject/GameObjectType';
