@@ -200,7 +200,6 @@ export default class BlastGame {
 
 		if (tiles.length < this._minTileGroupSize) return;
 
-		this.score += this._pointsForTiles(tiles);
 		this._destroyTiles(tiles);
 
 		this.turns--;
@@ -314,6 +313,8 @@ export default class BlastGame {
 	}
 
 	private _destroyTiles(tiles: Array<Position>): void {
+		this.score += this._pointsForTiles(tiles);
+
 		const columnsToUpdate = new Set<number>;
 
 		const bombs = Array<Position>();
