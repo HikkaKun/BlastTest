@@ -336,7 +336,7 @@ export default class BlastGame {
 			if (tiles.length > 0) {
 				const tile = tiles.shift() as Tile;
 				this._field[index] = tile;
-				this.OnMoveTile(this.positionFromIndex(tile.index) as Position, new Position(x, y), false);
+				this.OnMoveTile(this.positionFromIndex(tile.index) as Position, new Position(x, y));
 				tile.index = index;
 			} else {
 				this._field[index] = this._generateTile(index);
